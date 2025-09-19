@@ -1,0 +1,44 @@
+services:
+  rss-discord-bot:
+    image: isyuricunha/discord-rss-bot:latest
+    container_name: rss-discord-bot
+    restart: unless-stopped
+    environment:
+      # Required: Discord webhook URL (replace with your actual webhook)
+      - DISCORD_WEBHOOK_URL=https://discord.com/api/webhooks/YOUR_WEBHOOK_ID/YOUR_WEBHOOK_TOKEN
+      
+      # Bot behavior settings
+      - CHECK_INTERVAL=300
+      - POST_DELAY=3
+      - COOLDOWN_DELAY=60
+      - MAX_POST_LENGTH=1900
+      - MAX_CONTENT_LENGTH=800
+      
+      # Default RSS feeds configured as environment variables
+      # General News
+      - RSS_FEEDS_NEWS=https://g1.globo.com/dynamo/rss2.xml,https://rss.uol.com.br/feed/noticias.xml,https://www.band.uol.com.br/rss/noticias.xml,https://www.cnnbrasil.com.br/rss/,https://feeds.folha.uol.com.br/folha/rss02.xml
+      
+      # Politics & Conservative
+      - RSS_FEEDS_POLITICS=https://www.gazetadopovo.com.br/rss/brasil.xml,https://jovempan.com.br/rss.xml,https://www.diariodopoder.com.br/feed/,https://www.pragmatismopolitico.com.br/feed/,https://conexaopolitica.com.br/feed/,https://www.poder360.com.br/feed/,https://crusoe.uol.com.br/rss/,https://veja.abril.com.br/rss/,https://www.metropoles.com/rss.xml,https://www.oantagonista.com/rss/,https://www.terra.com.br/rss/politica/
+      
+      # Technology
+      - RSS_FEEDS_TECHNOLOGY=https://canaltech.com.br/rss/,https://olhardigital.com.br/feed/,https://tecnoblog.net/feed/,https://meiobit.com/feed/,https://www.showmetech.com.br/feed/,https://www.tecmundo.com.br/rss,https://www.adrenaline.com.br/rss/,https://www.hardware.com.br/rss/,https://www.tudocelular.com/rss/,https://www.oficinadanet.com.br/rss
+      
+      # Override default system paths to use Docker paths
+      - RSS_BOT_DATA=/app/data
+      - RSS_BOT_LOGS=/app/logs
+    volumes:
+      - ~/docker/docker-data/rss-discord-bot/data:/app/data
+      - ~/docker/docker-data/rss-discord-bot/logs:/app/logs
+    networks:
+      - rss-bot-network
+    healthcheck:
+      test: ["CMD", "python", "-c", "import sqlite3; conn = sqlite3.connect('/app/data/posted_hashes.db'); conn.close()"]
+      interval: 5m
+      timeout: 30s
+      retries: 3
+      start_period: 30s
+
+networks:
+  rss-bot-network:
+    driver: bridge

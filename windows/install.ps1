@@ -37,11 +37,27 @@ Write-Host "Installing Python dependencies..."
 $configContent = @"
 # Discord RSS Bot Configuration
 DISCORD_WEBHOOK_URL=$WebhookUrl
+
+# Bot Configuration
 CHECK_INTERVAL=300
 POST_DELAY=3
 COOLDOWN_DELAY=60
 MAX_POST_LENGTH=1900
 MAX_CONTENT_LENGTH=800
+
+# Custom RSS Feeds Configuration
+# Format: RSS_FEEDS_CATEGORY_NAME=url1,url2,url3
+# Examples (uncomment and modify as needed):
+# RSS_FEEDS_NEWS=https://g1.globo.com/dynamo/rss2.xml,https://rss.uol.com.br/feed/noticias.xml
+# RSS_FEEDS_TECHNOLOGY=https://canaltech.com.br/rss/,https://tecnoblog.net/feed/
+# RSS_FEEDS_SPORTS=https://globoesporte.globo.com/rss/ultimas/
+# RSS_FEEDS_BUSINESS=https://www.infomoney.com.br/rss/
+# RSS_FEEDS_POLITICS=https://www.gazetadopovo.com.br/rss/brasil.xml,https://jovempan.com.br/rss.xml
+
+# Note: If no custom feeds are configured, the bot will use default Brazilian news feeds
+# Category names will automatically get emojis: News(📰), Technology(💻), Politics(🏛️), Sports(⚽), Business(💼), Others(📢)
+
+# System Configuration
 RSS_BOT_DATA=$InstallPath\data
 RSS_BOT_LOGS=$InstallPath\logs
 "@

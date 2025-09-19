@@ -7,12 +7,23 @@ services:
     container_name: discord-rss-bot
     restart: unless-stopped
     environment:
+      # Required: Discord webhook URL
       - DISCORD_WEBHOOK_URL=${DISCORD_WEBHOOK_URL}
+      
+      # Optional: Bot behavior settings
       - CHECK_INTERVAL=${CHECK_INTERVAL:-300}
       - POST_DELAY=${POST_DELAY:-3}
       - COOLDOWN_DELAY=${COOLDOWN_DELAY:-60}
       - MAX_POST_LENGTH=${MAX_POST_LENGTH:-1900}
       - MAX_CONTENT_LENGTH=${MAX_CONTENT_LENGTH:-800}
+      
+      # Optional: Custom RSS feeds (from .env file)
+      # Format: RSS_FEEDS_CATEGORY_NAME=url1,url2,url3
+      # Examples in .env:
+      # RSS_FEEDS_NEWS=https://g1.globo.com/dynamo/rss2.xml,https://rss.uol.com.br/feed/noticias.xml
+      # RSS_FEEDS_TECHNOLOGY=https://canaltech.com.br/rss/,https://tecnoblog.net/feed/
+      # RSS_FEEDS_SPORTS=https://globoesporte.globo.com/rss/ultimas/
+      # RSS_FEEDS_BUSINESS=https://www.infomoney.com.br/rss/
     volumes:
       - ./data:/app/data
       - ./logs:/app/logs

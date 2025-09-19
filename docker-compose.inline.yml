@@ -2,7 +2,7 @@ version: '3.8'
 
 services:
   discord-rss-bot:
-    build: .
+    image: isyuricunha/discord-rss-bot:latest
     container_name: discord-rss-bot
     restart: unless-stopped
     environment:

@@ -2,8 +2,8 @@ version: '3.8'
 
 services:
   discord-rss-bot:
-    # Use pre-built image from GitHub Container Registry
-    image: ghcr.io/YOUR_USERNAME/discord-rss-bot:latest
+    # Use pre-built image from Docker Hub
+    image: isyuricunha/discord-rss-bot:latest
     container_name: discord-rss-bot
     restart: unless-stopped
     environment:

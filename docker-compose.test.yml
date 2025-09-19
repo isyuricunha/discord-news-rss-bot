@@ -1,6 +1,6 @@
 services:
   rss-discord-bot:
-    image: isyuricunha/discord-rss-bot:latest
+    build: .
     container_name: rss-discord-bot
     restart: unless-stopped
     environment:

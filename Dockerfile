@@ -28,8 +28,8 @@ RUN pip install --no-cache-dir -r requirements.txt
 # Copy application code
 COPY bot_service.py .
 
-# Create directory for database and logs
-RUN mkdir -p /app/data
+# Create directories for database and logs
+RUN mkdir -p /app/data /app/logs
 
 # Create non-root user for security
 RUN groupadd -r botuser && useradd -r -g botuser botuser

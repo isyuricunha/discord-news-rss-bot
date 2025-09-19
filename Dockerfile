@@ -21,7 +21,7 @@ COPY requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
 
 # Copy application code
-COPY bot.py .
+COPY bot_service.py .
 
 # Create directory for database and logs
 RUN mkdir -p /app/data
@@ -36,4 +36,4 @@ HEALTHCHECK --interval=5m --timeout=30s --start-period=30s --retries=3 \
     CMD python -c "import sqlite3; conn = sqlite3.connect('/app/data/posted_hashes.db'); conn.close()" || exit 1
 
 # Run the bot
-CMD ["python", "bot.py"]
+CMD ["python", "bot_service.py"]

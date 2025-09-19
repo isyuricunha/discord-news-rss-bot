@@ -1,0 +1,38 @@
+version: '3.8'
+
+services:
+  discord-rss-bot:
+    build: .
+    container_name: discord-rss-bot
+    restart: unless-stopped
+    environment:
+      # Replace with your actual Discord webhook URL
+      - DISCORD_WEBHOOK_URL=https://discord.com/api/webhooks/YOUR_WEBHOOK_ID/YOUR_WEBHOOK_TOKEN
+      - CHECK_INTERVAL=300
+      - POST_DELAY=3
+      - COOLDOWN_DELAY=60
+      - MAX_POST_LENGTH=1900
+      - MAX_CONTENT_LENGTH=800
+      - DB_FILE=/app/data/posted_hashes.db
+      - LOG_FILE=/app/logs/rss_bot.log
+    volumes:
+      - ./data:/app/data
+      - ./logs:/app/logs
+    networks:
+      - rss-bot-network
+    healthcheck:
+      test: ["CMD", "python", "-c", "import sqlite3; conn = sqlite3.connect('/app/data/posted_hashes.db'); conn.close()"]
+      interval: 5m
+      timeout: 30s
+      retries: 3
+      start_period: 30s
+
+networks:
+  rss-bot-network:
+    driver: bridge
+
+volumes:
+  bot-data:
+    driver: local
+  bot-logs:
+    driver: local

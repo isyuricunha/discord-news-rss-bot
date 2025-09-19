@@ -21,8 +21,17 @@ Automated bot that monitors RSS feeds and posts updates to Discord channels via 
 ### Using Pre-built Container (Recommended)
 
 ```bash
-# Create directories
-mkdir -p data logs
+# Create directories with proper permissions
+mkdir -p ~/docker/docker-data/rss-discord-bot/data
+mkdir -p ~/docker/docker-data/rss-discord-bot/logs
+
+# Set permissions for container access
+chmod 777 ~/docker/docker-data/rss-discord-bot/logs
+chmod 777 ~/docker/docker-data/rss-discord-bot/data
+
+# Alternative: Set ownership (more secure)
+# docker run --rm isyuricunha/discord-rss-bot:latest id  # Check container user ID
+# sudo chown -R 1000:1000 ~/docker/docker-data/rss-discord-bot/
 
 # Create .env file with your webhook URL
 echo "DISCORD_WEBHOOK_URL=https://discord.com/api/webhooks/YOUR_ID/YOUR_TOKEN" > .env
@@ -31,36 +40,41 @@ echo "DISCORD_WEBHOOK_URL=https://discord.com/api/webhooks/YOUR_ID/YOUR_TOKEN" >
 docker run -d \
   --name discord-rss-bot \
   --env-file .env \
-  -v $(pwd)/data:/app/data \
-  -v $(pwd)/logs:/app/logs \
+  -v ~/docker/docker-data/rss-discord-bot/data:/app/data \
+  -v ~/docker/docker-data/rss-discord-bot/logs:/app/logs \
   --restart unless-stopped \
-  ghcr.io/YOUR_USERNAME/discord-rss-bot:latest
+  isyuricunha/discord-rss-bot:latest
 ```
 
 ### Using Docker Compose
 
 ```bash
 # Clone repository
-git clone https://github.com/YOUR_USERNAME/discord-rss-bot
+git clone https://github.com/isyuricunha/discord-rss-bot
 cd discord-rss-bot
+
+# Create directories with proper permissions
+mkdir -p ~/docker/docker-data/rss-discord-bot/data
+mkdir -p ~/docker/docker-data/rss-discord-bot/logs
+chmod 777 ~/docker/docker-data/rss-discord-bot/logs
+chmod 777 ~/docker/docker-data/rss-discord-bot/data
 
 # Configure environment
 cp .env.example .env
 # Edit .env with your Discord webhook URL
 
-# Run with Docker Compose
-docker-compose up -d
+# Run with Docker Compose (for testing with pre-built image)
+docker-compose -f docker-compose.test.yml up -d
 
 # View logs
-docker-compose logs -f
+docker-compose -f docker-compose.test.yml logs -f
 ```
 
 ## 📦 Container Images
 
-Pre-built images are available from multiple registries:
+Pre-built images are available from Docker Hub:
 
-- **GitHub Container Registry**: `ghcr.io/YOUR_USERNAME/discord-rss-bot:latest`
-- **Docker Hub**: `YOUR_USERNAME/discord-rss-bot:latest`
+- **Docker Hub**: `isyuricunha/discord-rss-bot:latest`
 
 ### Supported Architectures
 - `linux/amd64` (x86_64)
@@ -79,10 +93,17 @@ docker-compose up -d
 docker-compose -f docker-compose.inline.yml up -d
 ```
 
-### 3. Pre-built Image
+### 3. Pre-built Image (from .env file)
 ```bash
-# Edit docker-compose.prebuilt.yml with your username
+# Edit docker-compose.prebuilt.yml and configure .env file
 docker-compose -f docker-compose.prebuilt.yml up -d
+```
+
+### 4. Testing with All Default Feeds
+```bash
+# Use the test configuration with all feeds pre-configured
+# Edit webhook URL in docker-compose.test.yml first
+docker-compose -f docker-compose.test.yml up -d
 ```
 
 ## 🖥️ System Service Installation
@@ -208,9 +229,10 @@ discord-rss-bot/
 ├── bot_service.py                  # System service version
 ├── requirements.txt                # Python dependencies
 ├── Dockerfile                      # Container configuration
-├── docker-compose.yml              # Docker orchestration
-├── docker-compose.inline.yml       # Inline environment variables
-├── docker-compose.prebuilt.yml     # Pre-built image version
+├── docker-compose.yml              # Docker orchestration (local build)
+├── docker-compose.inline.yml       # Inline environment variables (Docker Hub)
+├── docker-compose.prebuilt.yml     # Pre-built image version (Docker Hub)
+├── docker-compose.test.yml         # Testing with all default feeds (Docker Hub)
 ├── .env                            # Environment variables
 ├── .env.example                    # Configuration example
 ├── .dockerignore                   # Files ignored in build
@@ -309,9 +331,35 @@ Edit the `parse_feeds_from_env()` function in `bot_service.py` to modify default
 2. Check logs: `docker-compose logs`
 3. Ensure ports are not in use
 
-### Permission Issues
+### Permission Issues (Docker Volumes)
+
+If you encounter permission errors with Docker volumes:
+
 ```bash
-# Fix volume permissions
+# Stop the container first
+docker compose down
+
+# Create directories with proper permissions
+mkdir -p ~/docker/docker-data/rss-discord-bot/data
+mkdir -p ~/docker/docker-data/rss-discord-bot/logs
+
+# Option A: Give full access (simple but less secure)
+chmod 777 ~/docker/docker-data/rss-discord-bot/logs
+chmod 777 ~/docker/docker-data/rss-discord-bot/data
+
+# Option B: Set proper ownership (more secure)
+# First check what user the container runs as:
+docker run --rm isyuricunha/discord-rss-bot:latest id
+# Then set ownership accordingly (replace 1000:1000 with actual UID:GID)
+sudo chown -R 1000:1000 ~/docker/docker-data/rss-discord-bot/
+
+# Start the container again
+docker compose up -d
+```
+
+### Legacy Permission Fix (for local data/logs directories)
+```bash
+# Fix volume permissions for local directories
 sudo chown -R $USER:$USER data logs
 ```
 

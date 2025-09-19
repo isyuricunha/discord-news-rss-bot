@@ -8,7 +8,12 @@ WORKDIR /app
 ENV PYTHONDONTWRITEBYTECODE=1 \
     PYTHONUNBUFFERED=1 \
     PIP_NO_CACHE_DIR=1 \
-    PIP_DISABLE_PIP_VERSION_CHECK=1
+    PIP_DISABLE_PIP_VERSION_CHECK=1 \
+    CHECK_INTERVAL=300 \
+    POST_DELAY=3 \
+    COOLDOWN_DELAY=60 \
+    MAX_POST_LENGTH=1900 \
+    MAX_CONTENT_LENGTH=800
 
 # Install system dependencies
 RUN apt-get update && apt-get install -y --no-install-recommends \

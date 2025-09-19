@@ -6,12 +6,26 @@ services:
     container_name: discord-rss-bot
     restart: unless-stopped
     environment:
+      # Required: Discord webhook URL
       - DISCORD_WEBHOOK_URL=${DISCORD_WEBHOOK_URL}
-      - CHECK_INTERVAL=${CHECK_INTERVAL:-300}
-      - POST_DELAY=${POST_DELAY:-3}
-      - COOLDOWN_DELAY=${COOLDOWN_DELAY:-60}
-      - MAX_POST_LENGTH=${MAX_POST_LENGTH:-1900}
-      - MAX_CONTENT_LENGTH=${MAX_CONTENT_LENGTH:-800}
+      
+      # Optional: Bot behavior settings
+      - CHECK_INTERVAL=${CHECK_INTERVAL:-300}        # Check feeds every 5 minutes
+      - POST_DELAY=${POST_DELAY:-3}                  # Wait 3 seconds between posts
+      - COOLDOWN_DELAY=${COOLDOWN_DELAY:-60}         # Wait 60 seconds on rate limit
+      - MAX_POST_LENGTH=${MAX_POST_LENGTH:-1900}     # Maximum Discord message length
+      - MAX_CONTENT_LENGTH=${MAX_CONTENT_LENGTH:-800} # Maximum content preview length
+      
+      # Optional: Custom RSS feeds (comma-separated URLs)
+      # Format: RSS_FEEDS_CATEGORY_NAME=url1,url2,url3
+      # Examples:
+      # - RSS_FEEDS_NEWS=https://g1.globo.com/dynamo/rss2.xml,https://rss.uol.com.br/feed/noticias.xml
+      # - RSS_FEEDS_TECHNOLOGY=https://canaltech.com.br/rss/,https://tecnoblog.net/feed/
+      # - RSS_FEEDS_SPORTS=https://globoesporte.globo.com/rss/ultimas/
+      # - RSS_FEEDS_BUSINESS=https://www.infomoney.com.br/rss/
+      
+      # If no custom feeds are set, the bot will use default Brazilian news feeds
+      
     volumes:
       - ./data:/app/data
       - ./logs:/app/logs

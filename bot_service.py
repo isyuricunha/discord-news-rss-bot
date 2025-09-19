@@ -35,41 +35,78 @@ if not DISCORD_WEBHOOK_URL and os.path.exists(CONFIG_FILE):
     except Exception as e:
         print(f"Error loading config file {CONFIG_FILE}: {e}")
 
-# Feeds organized by category
-FEEDS = {
-    "📰 General News": [
-        "https://g1.globo.com/dynamo/rss2.xml",                    # G1 - Working
-        "https://rss.uol.com.br/feed/noticias.xml",                # UOL - Has issues but works
-        "https://www.band.uol.com.br/rss/noticias.xml",            # Band
-        "https://www.cnnbrasil.com.br/rss/",                       # CNN Brasil
-        "https://feeds.folha.uol.com.br/folha/rss02.xml",          # Folha - Alternative feed
-    ],
-    "🏛️ Politics & Conservative": [
-        "https://www.gazetadopovo.com.br/rss/brasil.xml",          # Gazeta do Povo - Brazil Feed
-        "https://jovempan.com.br/rss.xml",                         # Jovem Pan - Alternative feed
-        "https://www.diariodopoder.com.br/feed/",                  # Diário do Poder - Working
-        "https://www.pragmatismopolitico.com.br/feed/",            # Pragmatismo - Working
-        "https://conexaopolitica.com.br/feed/",                    # Conexão Política - Working
-        "https://www.poder360.com.br/feed/",                       # Poder 360
-        "https://crusoe.uol.com.br/rss/",                          # Revista Crusoé
-        "https://veja.abril.com.br/rss/",                          # Veja
-        "https://www.metropoles.com/rss.xml",                      # Metrópoles
-        "https://www.oantagonista.com/rss/",                       # O Antagonista
-        "https://www.terra.com.br/rss/politica/",                  # Terra Politics
-    ],
-    "💻 Technology": [
-        "https://canaltech.com.br/rss/",                           # Canaltech - Working
-        "https://olhardigital.com.br/feed/",                       # Olhar Digital - Working
-        "https://tecnoblog.net/feed/",                              # Tecnoblog - Working
-        "https://meiobit.com/feed/",                                # Meio Bit - Working
-        "https://www.showmetech.com.br/feed/",                     # Showmetech - Working
-        "https://www.tecmundo.com.br/rss",                         # TecMundo
-        "https://www.adrenaline.com.br/rss/",                      # Adrenaline
-        "https://www.hardware.com.br/rss/",                        # Hardware.com.br
-        "https://www.tudocelular.com/rss/",                        # Tudo Celular
-        "https://www.oficinadanet.com.br/rss",                     # Oficina da Net
-    ]
-}
+def parse_feeds_from_env():
+    """Parse RSS feeds from environment variables"""
+    feeds = {}
+    
+    # Check for custom feeds from environment variables
+    # Format: RSS_FEEDS_CATEGORY_NAME=url1,url2,url3
+    # Example: RSS_FEEDS_NEWS=https://example.com/rss,https://another.com/feed
+    for key, value in os.environ.items():
+        if key.startswith('RSS_FEEDS_'):
+            category_key = key[10:]  # Remove 'RSS_FEEDS_' prefix
+            category_name = category_key.replace('_', ' ').title()
+            
+            # Add emoji based on category name
+            if any(word in category_name.lower() for word in ['news', 'noticias', 'general']):
+                category_name = f"📰 {category_name}"
+            elif any(word in category_name.lower() for word in ['tech', 'technology', 'tecnologia']):
+                category_name = f"💻 {category_name}"
+            elif any(word in category_name.lower() for word in ['politics', 'politica', 'conservative']):
+                category_name = f"🏛️ {category_name}"
+            elif any(word in category_name.lower() for word in ['sports', 'esportes']):
+                category_name = f"⚽ {category_name}"
+            elif any(word in category_name.lower() for word in ['business', 'economia', 'finance']):
+                category_name = f"💼 {category_name}"
+            else:
+                category_name = f"📢 {category_name}"
+            
+            # Parse URLs (comma-separated)
+            urls = [url.strip() for url in value.split(',') if url.strip()]
+            if urls:
+                feeds[category_name] = urls
+    
+    # If no custom feeds are configured, use default feeds
+    if not feeds:
+        feeds = {
+            "📰 General News": [
+                "https://g1.globo.com/dynamo/rss2.xml",                    # G1 - Working
+                "https://rss.uol.com.br/feed/noticias.xml",                # UOL - Has issues but works
+                "https://www.band.uol.com.br/rss/noticias.xml",            # Band
+                "https://www.cnnbrasil.com.br/rss/",                       # CNN Brasil
+                "https://feeds.folha.uol.com.br/folha/rss02.xml",          # Folha - Alternative feed
+            ],
+            "🏛️ Politics & Conservative": [
+                "https://www.gazetadopovo.com.br/rss/brasil.xml",          # Gazeta do Povo - Brazil Feed
+                "https://jovempan.com.br/rss.xml",                         # Jovem Pan - Alternative feed
+                "https://www.diariodopoder.com.br/feed/",                  # Diário do Poder - Working
+                "https://www.pragmatismopolitico.com.br/feed/",            # Pragmatismo - Working
+                "https://conexaopolitica.com.br/feed/",                    # Conexão Política - Working
+                "https://www.poder360.com.br/feed/",                       # Poder 360
+                "https://crusoe.uol.com.br/rss/",                          # Revista Crusoé
+                "https://veja.abril.com.br/rss/",                          # Veja
+                "https://www.metropoles.com/rss.xml",                      # Metrópoles
+                "https://www.oantagonista.com/rss/",                       # O Antagonista
+                "https://www.terra.com.br/rss/politica/",                  # Terra Politics
+            ],
+            "💻 Technology": [
+                "https://canaltech.com.br/rss/",                           # Canaltech - Working
+                "https://olhardigital.com.br/feed/",                       # Olhar Digital - Working
+                "https://tecnoblog.net/feed/",                              # Tecnoblog - Working
+                "https://meiobit.com/feed/",                                # Meio Bit - Working
+                "https://www.showmetech.com.br/feed/",                     # Showmetech - Working
+                "https://www.tecmundo.com.br/rss",                         # TecMundo
+                "https://www.adrenaline.com.br/rss/",                      # Adrenaline
+                "https://www.hardware.com.br/rss/",                        # Hardware.com.br
+                "https://www.tudocelular.com/rss/",                        # Tudo Celular
+                "https://www.oficinadanet.com.br/rss",                     # Oficina da Net
+            ]
+        }
+    
+    return feeds
+
+# Parse feeds from environment or use defaults
+FEEDS = parse_feeds_from_env()
 
 CHECK_INTERVAL = int(os.getenv('CHECK_INTERVAL', '300'))
 POST_DELAY = int(os.getenv('POST_DELAY', '3'))

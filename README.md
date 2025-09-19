@@ -1,18 +1,20 @@
 # 🤖 Discord RSS Bot
 
-Automated bot that monitors Brazilian news RSS feeds and posts updates to Discord channels via webhook.
+Automated bot that monitors RSS feeds and posts updates to Discord channels via webhook. Fully configurable with custom feeds and categories.
 
 ## 📋 Features
 
-- ✅ Monitors multiple RSS feeds organized by category
+- ✅ **Configurable RSS feeds** via environment variables
 - 🔄 Automatic checking for new posts
-- 📱 Elegant Discord message formatting
+- 📱 Elegant Discord message formatting with categories
 - 💾 Cache system to avoid duplicate posts
 - 🧹 Automatic cleanup of old data
 - 🐳 Fully containerized with Docker
 - 📊 Detailed logging and health checks
 - 🏗️ Multiple deployment options (Docker, System Service)
 - 📦 Pre-built container images available
+- 🎯 **Multi-category support** with automatic emoji assignment
+- 🌐 **Multi-platform support** (AMD64, ARM64)
 
 ## 🚀 Quick Start
 
@@ -130,16 +132,73 @@ git push origin v1.0.0
 
 ## ⚙️ Configuration
 
+### Required Variables
+| Variable | Description |
+|----------|-------------|
+| `DISCORD_WEBHOOK_URL` | **Required**: Discord webhook URL |
+
+### Optional Bot Settings
 | Variable | Default | Description |
 |----------|---------|-------------|
-| `DISCORD_WEBHOOK_URL` | - | **Required**: Discord webhook URL |
 | `CHECK_INTERVAL` | 300 | Interval between checks (seconds) |
 | `POST_DELAY` | 3 | Delay between posts (seconds) |
 | `COOLDOWN_DELAY` | 60 | Delay after rate limit (seconds) |
 | `MAX_POST_LENGTH` | 1900 | Maximum message length |
 | `MAX_CONTENT_LENGTH` | 800 | Maximum content length |
-| `DB_FILE` | `/app/data/posted_hashes.db` | Database file path |
-| `LOG_FILE` | `/app/logs/rss_bot.log` | Log file path |
+
+### Custom RSS Feeds Configuration
+
+You can configure custom RSS feeds using environment variables with the format:
+```
+RSS_FEEDS_CATEGORY_NAME=url1,url2,url3
+```
+
+#### Examples:
+```bash
+# News feeds
+RSS_FEEDS_NEWS=https://g1.globo.com/dynamo/rss2.xml,https://rss.uol.com.br/feed/noticias.xml
+
+# Technology feeds  
+RSS_FEEDS_TECHNOLOGY=https://canaltech.com.br/rss/,https://tecnoblog.net/feed/
+
+# Sports feeds
+RSS_FEEDS_SPORTS=https://globoesporte.globo.com/rss/ultimas/
+
+# Business feeds
+RSS_FEEDS_BUSINESS=https://www.infomoney.com.br/rss/
+
+# Custom category
+RSS_FEEDS_MY_CATEGORY=https://example.com/rss,https://another.com/feed
+```
+
+#### Automatic Category Emojis:
+- **News/Noticias/General** → 📰
+- **Technology/Tecnologia** → 💻  
+- **Politics/Politica** → 🏛️
+- **Sports/Esportes** → ⚽
+- **Business/Economia** → 💼
+- **Other categories** → 📢
+
+### Docker Environment File (.env)
+```bash
+# Required
+DISCORD_WEBHOOK_URL=https://discord.com/api/webhooks/YOUR_ID/YOUR_TOKEN
+
+# Optional - Bot behavior
+CHECK_INTERVAL=300
+POST_DELAY=3
+COOLDOWN_DELAY=60
+MAX_POST_LENGTH=1900
+MAX_CONTENT_LENGTH=800
+
+# Optional - Custom feeds
+RSS_FEEDS_NEWS=https://g1.globo.com/dynamo/rss2.xml,https://rss.uol.com.br/feed/noticias.xml
+RSS_FEEDS_TECHNOLOGY=https://canaltech.com.br/rss/,https://tecnoblog.net/feed/
+RSS_FEEDS_SPORTS=https://globoesporte.globo.com/rss/ultimas/
+```
+
+### Default Feeds
+If no custom feeds are configured, the bot uses default Brazilian news feeds across multiple categories.
 
 ## 📁 File Structure
 
@@ -230,7 +289,13 @@ python bot_service.py
 
 ### Customize Feeds
 
-Edit the `FEEDS` variable in `bot.py` or `bot_service.py` to add/remove RSS feeds.
+You can customize feeds in two ways:
+
+#### 1. Environment Variables (Recommended)
+Use the `RSS_FEEDS_CATEGORY_NAME` format as described in the Configuration section above.
+
+#### 2. Code Modification
+Edit the `parse_feeds_from_env()` function in `bot_service.py` to modify default feeds.
 
 ## 🐛 Troubleshooting
 

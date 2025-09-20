@@ -15,6 +15,7 @@ services:
       - COOLDOWN_DELAY=${COOLDOWN_DELAY:-60}         # Wait 60 seconds on rate limit
       - MAX_POST_LENGTH=${MAX_POST_LENGTH:-1900}     # Maximum Discord message length
       - MAX_CONTENT_LENGTH=${MAX_CONTENT_LENGTH:-800} # Maximum content preview length
+      - FEED_TIMEOUT=${FEED_TIMEOUT:-30}             # RSS feed request timeout in seconds
       
       # Optional: Custom RSS feeds (comma-separated URLs)
       # Format: RSS_FEEDS_CATEGORY_NAME=url1,url2,url3

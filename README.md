@@ -166,6 +166,7 @@ git push origin v1.0.0
 | `COOLDOWN_DELAY` | 60 | Delay after rate limit (seconds) |
 | `MAX_POST_LENGTH` | 1900 | Maximum message length |
 | `MAX_CONTENT_LENGTH` | 800 | Maximum content length |
+| `FEED_TIMEOUT` | 30 | RSS feed request timeout (seconds) |
 
 ### Custom RSS Feeds Configuration
 

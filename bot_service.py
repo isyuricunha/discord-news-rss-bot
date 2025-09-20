@@ -17,6 +17,10 @@ import re
 import sys
 import signal
 from pathlib import Path
+import urllib.request
+import urllib.error
+from urllib.parse import urlparse
+import socket
 
 # ===================== CONFIGURATION =====================
 # Load configurations from environment variables or config file
@@ -113,6 +117,7 @@ POST_DELAY = int(os.getenv('POST_DELAY', '3'))
 COOLDOWN_DELAY = int(os.getenv('COOLDOWN_DELAY', '60'))
 MAX_POST_LENGTH = int(os.getenv('MAX_POST_LENGTH', '1900'))
 MAX_CONTENT_LENGTH = int(os.getenv('MAX_CONTENT_LENGTH', '800'))
+FEED_TIMEOUT = int(os.getenv('FEED_TIMEOUT', '30'))  # Timeout for RSS feed requests
 
 # Service-specific paths
 if os.name == 'nt':  # Windows
@@ -367,6 +372,34 @@ def post_to_discord(text):
         logger.error(f"Error posting to Discord: {e}")
         return False
 
+def fetch_feed_with_timeout(feed_url, timeout=FEED_TIMEOUT):
+    """Fetch RSS feed with proper timeout handling"""
+    try:
+        # Set socket timeout globally for this operation
+        old_timeout = socket.getdefaulttimeout()
+        socket.setdefaulttimeout(timeout)
+        
+        # Create a custom opener with timeout
+        opener = urllib.request.build_opener()
+        opener.addheaders = [('User-Agent', 'Mozilla/5.0 (compatible; Discord RSS Bot/2.0)')]
+        
+        # Fetch the feed with timeout
+        with opener.open(feed_url, timeout=timeout) as response:
+            feed_data = response.read()
+        
+        # Parse the feed data
+        feed = feedparser.parse(feed_data)
+        
+        return feed, None
+        
+    except (urllib.error.URLError, socket.timeout, socket.error) as e:
+        return None, f"Network timeout or error: {e}"
+    except Exception as e:
+        return None, f"Unexpected error: {e}"
+    finally:
+        # Restore original timeout
+        socket.setdefaulttimeout(old_timeout)
+
 def check_feeds(conn):
     total_new = 0
     
@@ -377,7 +410,17 @@ def check_feeds(conn):
         for feed_url in feed_urls:
             try:
                 logger.info(f"   📡 {get_source_name(feed_url)}...")
-                feed = feedparser.parse(feed_url)
+                
+                # Fetch feed with timeout
+                feed, error = fetch_feed_with_timeout(feed_url)
+                
+                if error:
+                    logger.warning(f"   ⚠️  Feed timeout/error: {error}")
+                    continue
+                
+                if not feed or not hasattr(feed, 'entries'):
+                    logger.warning(f"   ⚠️  Invalid feed data received")
+                    continue
                 
                 if feed.bozo and hasattr(feed, 'bozo_exception'):
                     logger.warning(f"   ⚠️  Feed has issues: {feed.bozo_exception}")

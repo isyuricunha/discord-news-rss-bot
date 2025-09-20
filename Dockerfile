@@ -13,7 +13,8 @@ ENV PYTHONDONTWRITEBYTECODE=1 \
     POST_DELAY=3 \
     COOLDOWN_DELAY=60 \
     MAX_POST_LENGTH=1900 \
-    MAX_CONTENT_LENGTH=800
+    MAX_CONTENT_LENGTH=800 \
+    FEED_TIMEOUT=30
 
 # Install system dependencies
 RUN apt-get update && apt-get install -y --no-install-recommends \

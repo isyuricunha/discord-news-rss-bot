@@ -31,39 +31,8 @@ mkdir -p ~/docker/docker-data/rss-discord-bot/logs
 chmod 777 ~/docker/docker-data/rss-discord-bot/logs
 chmod 777 ~/docker/docker-data/rss-discord-bot/data
 
-# Alternative: Set ownership (more secure)
-# docker run --rm isyuricunha/discord-rss-bot:latest id  # Check container user ID
-# sudo chown -R 1000:1000 ~/docker/docker-data/rss-discord-bot/
-
 # Create .env file with your webhook URL
 echo "DISCORD_WEBHOOK_URL=https://discord.com/api/webhooks/YOUR_ID/YOUR_TOKEN" > .env
-
-# Run with pre-built image
-docker run -d \
-  --name discord-rss-bot \
-  --env-file .env \
-  -v ~/docker/docker-data/rss-discord-bot/data:/app/data \
-  -v ~/docker/docker-data/rss-discord-bot/logs:/app/logs \
-  --restart unless-stopped \
-  isyuricunha/discord-rss-bot:latest
-```
-
-### Using Docker Compose
-
-```bash
-# Clone repository
-git clone https://github.com/isyuricunha/discord-rss-bot
-cd discord-rss-bot
-
-# Create directories with proper permissions
-mkdir -p ~/docker/docker-data/rss-discord-bot/data
-mkdir -p ~/docker/docker-data/rss-discord-bot/logs
-chmod 777 ~/docker/docker-data/rss-discord-bot/logs
-chmod 777 ~/docker/docker-data/rss-discord-bot/data
-
-# Configure environment
-cp .env.example .env
-# Edit .env with your Discord webhook URL
 
 # Run with Docker Compose (for testing with pre-built image)
 docker-compose -f docker-compose.test.yml up -d
@@ -71,6 +40,31 @@ docker-compose -f docker-compose.test.yml up -d
 # View logs
 docker-compose -f docker-compose.test.yml logs -f
 ```
+
+## 🏷️ Automatic Versioning System
+
+The project uses an automatic versioning system that:
+
+- **Automatically generates** a new GitHub tag on every push to `main` branch
+- **Updates only** the `latest` tag on Docker Hub
+- **Automatically increments** the patch version number based on the latest existing tag
+- **Does not update** all tags unnecessarily
+
+### How it works:
+
+1. On every push to `main` branch, GitHub Actions:
+   - Finds the latest tag in `v*.*.*` format (e.g., `v2.0.5`)
+   - Automatically increments the patch number (e.g., `v2.0.6`)
+   - Creates and publishes the new tag in the GitHub repository
+   - Builds and publishes only the `latest` Docker image:
+     - `isyuricunha/discord-rss-bot:latest`
+
+### Advantages:
+
+- ✅ No need to create tags manually
+- ✅ Consistent and automatic versioning
+- ✅ Only necessary tags are updated on Docker Hub
+- ✅ Complete version history maintained automatically in GitHub releases
 
 ## 📦 Container Images
 

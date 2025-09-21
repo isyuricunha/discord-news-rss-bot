@@ -37,10 +37,15 @@ jobs:
             NEW_TAG="v${MAJOR}.${MINOR}.${NEW_PATCH}"
           fi
           
+          # Create version without 'v' prefix for Docker tags
+          DOCKER_VERSION=$(echo $NEW_TAG | sed 's/v//')
+          
           echo "latest_tag=$LATEST_TAG" >> $GITHUB_OUTPUT
           echo "new_tag=$NEW_TAG" >> $GITHUB_OUTPUT
+          echo "docker_version=$DOCKER_VERSION" >> $GITHUB_OUTPUT
           echo "Latest tag: $LATEST_TAG"
           echo "New tag: $NEW_TAG"
+          echo "Docker version: $DOCKER_VERSION"
 
       - name: Create and push new tag
         if: github.event_name != 'pull_request'
@@ -76,9 +81,9 @@ jobs:
           push: ${{ github.event_name != 'pull_request' }}
           tags: |
             ${{ secrets.DOCKERHUB_USERNAME }}/discord-rss-bot:latest
-            ${{ secrets.DOCKERHUB_USERNAME }}/discord-rss-bot:${{ steps.version.outputs.new_tag }}
+            ${{ secrets.DOCKERHUB_USERNAME }}/discord-rss-bot:${{ steps.version.outputs.docker_version }}
             ghcr.io/${{ github.repository }}:latest
-            ghcr.io/${{ github.repository }}:${{ steps.version.outputs.new_tag }}
+            ghcr.io/${{ github.repository }}:${{ steps.version.outputs.docker_version }}
           labels: |
             org.opencontainers.image.title=Discord RSS Bot
             org.opencontainers.image.description=Bot to monitor RSS feeds and post to Discord

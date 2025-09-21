@@ -15,7 +15,11 @@ services:
       - MAX_CONTENT_LENGTH=800
       - FEED_TIMEOUT=30
       
-      # Default RSS feeds configured as environment variables
+      # Test configuration with all default feeds
+      # You can also use RSS_FEEDS for universal configuration:
+      # - RSS_FEEDS=https://example.com/rss,https://another.com/feed
+      
+      # Category-based configuration (current setup):
       # General News
       - RSS_FEEDS_NEWS=https://g1.globo.com/dynamo/rss2.xml,https://rss.uol.com.br/feed/noticias.xml,https://www.band.uol.com.br/rss/noticias.xml,https://www.cnnbrasil.com.br/rss/,https://feeds.folha.uol.com.br/folha/rss02.xml
       

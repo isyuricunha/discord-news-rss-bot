@@ -109,16 +109,19 @@ MAX_POST_LENGTH=1900
 MAX_CONTENT_LENGTH=800
 
 # Custom RSS Feeds Configuration
-# Format: RSS_FEEDS_CATEGORY_NAME=url1,url2,url3
-# Examples (uncomment and modify as needed):
+# Option 1: Universal feeds (simple, all feeds in one variable)
+# RSS_FEEDS=https://example.com/rss,https://another.com/feed,https://third.com/rss
+
+# Option 2: Category-based feeds (organized by categories with emojis)
 # RSS_FEEDS_NEWS=https://g1.globo.com/dynamo/rss2.xml,https://rss.uol.com.br/feed/noticias.xml
 # RSS_FEEDS_TECHNOLOGY=https://canaltech.com.br/rss/,https://tecnoblog.net/feed/
 # RSS_FEEDS_SPORTS=https://globoesporte.globo.com/rss/ultimas/
 # RSS_FEEDS_BUSINESS=https://www.infomoney.com.br/rss/
 # RSS_FEEDS_POLITICS=https://www.gazetadopovo.com.br/rss/brasil.xml,https://jovempan.com.br/rss.xml
 
-# Note: If no custom feeds are configured, the bot will use default Brazilian news feeds
-# Category names will automatically get emojis: News(📰), Technology(💻), Politics(🏛️), Sports(⚽), Business(💼), Others(📢)
+# Note: RSS_FEEDS takes priority over category-based feeds
+# If no custom feeds are configured, the bot will use default Brazilian news feeds
+# Category names automatically get emojis: News(📰), Technology(💻), Politics(🏛️), Sports(⚽), Business(💼), Others(📢)
 
 # System Configuration
 RSS_BOT_DATA=$DATA_DIR

@@ -15,14 +15,17 @@ services:
       - MAX_CONTENT_LENGTH=${MAX_CONTENT_LENGTH:-800} # Maximum content preview length
       - FEED_TIMEOUT=${FEED_TIMEOUT:-30}             # RSS feed request timeout in seconds
       
-      # Optional: Custom RSS feeds (comma-separated URLs)
-      # Format: RSS_FEEDS_CATEGORY_NAME=url1,url2,url3
-      # Examples:
+      # Optional: Custom RSS feeds
+      # Option 1: Universal feeds (simple, all feeds in one variable)
+      # - RSS_FEEDS=https://example.com/rss,https://another.com/feed,https://third.com/rss
+      
+      # Option 2: Category-based feeds (organized by categories with emojis)
       # - RSS_FEEDS_NEWS=https://g1.globo.com/dynamo/rss2.xml,https://rss.uol.com.br/feed/noticias.xml
       # - RSS_FEEDS_TECHNOLOGY=https://canaltech.com.br/rss/,https://tecnoblog.net/feed/
       # - RSS_FEEDS_SPORTS=https://globoesporte.globo.com/rss/ultimas/
       # - RSS_FEEDS_BUSINESS=https://www.infomoney.com.br/rss/
       
+      # Note: RSS_FEEDS takes priority over category-based feeds
       # If no custom feeds are set, the bot will use default Brazilian news feeds
       
     volumes:

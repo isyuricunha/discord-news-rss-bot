@@ -2,21 +2,20 @@
 
 Automated bot that monitors RSS feeds and posts updates to Discord channels via webhook. Fully configurable with custom feeds and categories. Features timeout handling to prevent hanging on slow RSS feeds.
 
-## 📋 Features
+## ✨ Features
 
-- ✅ **Configurable RSS feeds** via environment variables
-- 🔄 Automatic checking for new posts
-- 📱 Elegant Discord message formatting with categories
-- 💾 Cache system to avoid duplicate posts
-- 🧹 Automatic cleanup of old data
-- 🐳 Fully containerized with Docker
-- 📊 Detailed logging and health checks
-- ⏱️ RSS feed timeout handling to prevent hanging
-- 🛡️ Robust error handling for network issues
-- 🏗️ Multiple deployment options (Docker, System Service)
-- 📦 Pre-built container images available
-- 🎯 **Multi-category support** with automatic emoji assignment
-- 🌐 **Multi-platform support** (AMD64, ARM64)
+- 🔄 **Automatic RSS monitoring** with configurable intervals
+- 📱 **Elegant Discord formatting** with category emojis
+- 💾 **Smart caching** to prevent duplicate posts
+- ⏱️ **Timeout handling** prevents hanging on slow feeds
+- 🛡️ **Robust error handling** for network issues
+- 🐳 **Fully containerized** with Docker support
+- 📦 **Pre-built images** available on Docker Hub & GHCR
+- 🌐 **Multi-platform** (AMD64, ARM64)
+- 🎯 **Flexible configuration** - universal or category-based feeds
+- 🏗️ **Multiple deployment options** (Docker, System Service)
+- 📊 **Comprehensive logging** and health checks
+- 🔒 **Security-focused** with non-root containers
 
 ## 🚀 Quick Start
 
@@ -41,40 +40,24 @@ docker-compose -f docker-compose.test.yml up -d
 docker-compose -f docker-compose.test.yml logs -f
 ```
 
-## 🏷️ Automatic Versioning System
-
-The project uses an automatic versioning system that:
-
-- **Automatically generates** a new GitHub tag on every push to `main` branch
-- **Updates only** the `latest` tag on Docker Hub
-- **Automatically increments** the patch version number based on the latest existing tag
-- **Does not update** all tags unnecessarily
-
-### How it works:
-
-1. On every push to `main` branch, GitHub Actions:
-   - Finds the latest tag in `v*.*.*` format (e.g., `v2.0.5`)
-   - Automatically increments the patch number (e.g., `v2.0.6`)
-   - Creates and publishes the new tag in the GitHub repository
-   - Builds and publishes only the `latest` Docker image:
-     - `isyuricunha/discord-rss-bot:latest`
-
-### Advantages:
-
-- ✅ No need to create tags manually
-- ✅ Consistent and automatic versioning
-- ✅ Only necessary tags are updated on Docker Hub
-- ✅ Complete version history maintained automatically in GitHub releases
-
 ## 📦 Container Images
 
-Pre-built images are available from Docker Hub:
+Pre-built images are available from multiple registries:
 
-- **Docker Hub**: `isyuricunha/discord-rss-bot:latest`
+- **Docker Hub**: `isyuricunha/discord-rss-bot:latest` | `isyuricunha/discord-rss-bot:2.0.8`
+- **GitHub Container Registry**: `ghcr.io/isyuricunha/discord-news-rss-bot:latest` | `ghcr.io/isyuricunha/discord-news-rss-bot:2.0.8`
 
 ### Supported Architectures
 - `linux/amd64` (x86_64)
 - `linux/arm64` (ARM64/AArch64)
+
+### 🏷️ Automatic Versioning
+
+The project uses automated CI/CD that:
+- **Auto-creates Git tags** on every push to `main` (e.g., `v2.0.8`)
+- **Publishes to both registries** simultaneously
+- **Maintains version consistency** across Docker Hub and GHCR
+- **Updates both `latest` and specific version tags**
 
 ## 🐳 Docker Deployment Options
 
@@ -164,32 +147,32 @@ git push origin v1.0.0
 | `MAX_CONTENT_LENGTH` | 800 | Maximum content length |
 | `FEED_TIMEOUT` | 30 | RSS feed request timeout (seconds) |
 
-### Custom RSS Feeds Configuration
+### 🎯 RSS Feeds Configuration
 
-You can configure custom RSS feeds using environment variables with the format:
-```
-RSS_FEEDS_CATEGORY_NAME=url1,url2,url3
-```
+The bot supports **two configuration methods** with automatic priority handling:
 
-#### Examples:
+#### Option 1: Universal Feeds (Simple)
+Use a single variable for all your RSS feeds:
 ```bash
-# News feeds
-RSS_FEEDS_NEWS=https://g1.globo.com/dynamo/rss2.xml,https://rss.uol.com.br/feed/noticias.xml
-
-# Technology feeds  
-RSS_FEEDS_TECHNOLOGY=https://canaltech.com.br/rss/,https://tecnoblog.net/feed/
-
-# Sports feeds
-RSS_FEEDS_SPORTS=https://globoesporte.globo.com/rss/ultimas/
-
-# Business feeds
-RSS_FEEDS_BUSINESS=https://www.infomoney.com.br/rss/
-
-# Custom category
-RSS_FEEDS_MY_CATEGORY=https://example.com/rss,https://another.com/feed
+RSS_FEEDS=https://example.com/rss,https://another.com/feed,https://third.com/rss
 ```
 
-#### Automatic Category Emojis:
+#### Option 2: Category-Based Feeds (Organized)
+Use separate variables for different categories:
+```bash
+RSS_FEEDS_NEWS=https://g1.globo.com/dynamo/rss2.xml,https://rss.uol.com.br/feed/noticias.xml
+RSS_FEEDS_TECHNOLOGY=https://canaltech.com.br/rss/,https://tecnoblog.net/feed/
+RSS_FEEDS_SPORTS=https://globoesporte.globo.com/rss/ultimas/
+RSS_FEEDS_BUSINESS=https://www.infomoney.com.br/rss/
+RSS_FEEDS_POLITICS=https://www.gazetadopovo.com.br/rss/brasil.xml
+```
+
+#### 🔄 Priority System:
+1. **RSS_FEEDS** (universal) - takes priority if set
+2. **RSS_FEEDS_CATEGORY** (categories) - used if no universal feeds
+3. **Default feeds** - Brazilian news feeds if no custom configuration
+
+#### 🎨 Automatic Category Emojis:
 - **News/Noticias/General** → 📰
 - **Technology/Tecnologia** → 💻  
 - **Politics/Politica** → 🏛️
@@ -210,10 +193,14 @@ MAX_POST_LENGTH=1900
 MAX_CONTENT_LENGTH=800
 FEED_TIMEOUT=30
 
-# Optional - Custom feeds
-RSS_FEEDS_NEWS=https://g1.globo.com/dynamo/rss2.xml,https://rss.uol.com.br/feed/noticias.xml
-RSS_FEEDS_TECHNOLOGY=https://canaltech.com.br/rss/,https://tecnoblog.net/feed/
-RSS_FEEDS_SPORTS=https://globoesporte.globo.com/rss/ultimas/
+# Optional - Custom feeds (choose one method)
+# Method 1: Universal (simple)
+# RSS_FEEDS=https://example.com/rss,https://another.com/feed
+
+# Method 2: Category-based (organized)
+# RSS_FEEDS_NEWS=https://g1.globo.com/dynamo/rss2.xml,https://rss.uol.com.br/feed/noticias.xml
+# RSS_FEEDS_TECHNOLOGY=https://canaltech.com.br/rss/,https://tecnoblog.net/feed/
+# RSS_FEEDS_SPORTS=https://globoesporte.globo.com/rss/ultimas/
 ```
 
 ### Default Feeds

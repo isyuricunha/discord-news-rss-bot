@@ -43,34 +43,42 @@ def parse_feeds_from_env():
     """Parse RSS feeds from environment variables"""
     feeds = {}
     
-    # Check for custom feeds from environment variables
-    # Format: RSS_FEEDS_CATEGORY_NAME=url1,url2,url3
-    # Example: RSS_FEEDS_NEWS=https://example.com/rss,https://another.com/feed
-    for key, value in os.environ.items():
-        if key.startswith('RSS_FEEDS_'):
-            category_key = key[10:]  # Remove 'RSS_FEEDS_' prefix
-            category_name = category_key.replace('_', ' ').title()
-            
-            # Add emoji based on category name
-            if any(word in category_name.lower() for word in ['news', 'noticias', 'general']):
-                category_name = f"📰 {category_name}"
-            elif any(word in category_name.lower() for word in ['tech', 'technology', 'tecnologia']):
-                category_name = f"💻 {category_name}"
-            elif any(word in category_name.lower() for word in ['politics', 'politica', 'conservative']):
-                category_name = f"🏛️ {category_name}"
-            elif any(word in category_name.lower() for word in ['sports', 'esportes']):
-                category_name = f"⚽ {category_name}"
-            elif any(word in category_name.lower() for word in ['business', 'economia', 'finance']):
-                category_name = f"💼 {category_name}"
-            else:
-                category_name = f"📢 {category_name}"
-            
-            # Parse URLs (comma-separated)
-            urls = [url.strip() for url in value.split(',') if url.strip()]
-            if urls:
-                feeds[category_name] = urls
+    # Priority 1: Check for universal RSS_FEEDS variable
+    universal_feeds = os.getenv('RSS_FEEDS')
+    if universal_feeds:
+        urls = [url.strip() for url in universal_feeds.split(',') if url.strip()]
+        if urls:
+            feeds["📢 Universal Feeds"] = urls
     
-    # If no custom feeds are configured, use default feeds
+    # Priority 2: Check for category-specific feeds (only if no universal feeds)
+    if not feeds:
+        # Format: RSS_FEEDS_CATEGORY_NAME=url1,url2,url3
+        # Example: RSS_FEEDS_NEWS=https://example.com/rss,https://another.com/feed
+        for key, value in os.environ.items():
+            if key.startswith('RSS_FEEDS_') and key != 'RSS_FEEDS':
+                category_key = key[10:]  # Remove 'RSS_FEEDS_' prefix
+                category_name = category_key.replace('_', ' ').title()
+                
+                # Add emoji based on category name
+                if any(word in category_name.lower() for word in ['news', 'noticias', 'general']):
+                    category_name = f"📰 {category_name}"
+                elif any(word in category_name.lower() for word in ['tech', 'technology', 'tecnologia']):
+                    category_name = f"💻 {category_name}"
+                elif any(word in category_name.lower() for word in ['politics', 'politica', 'conservative']):
+                    category_name = f"🏛️ {category_name}"
+                elif any(word in category_name.lower() for word in ['sports', 'esportes']):
+                    category_name = f"⚽ {category_name}"
+                elif any(word in category_name.lower() for word in ['business', 'economia', 'finance']):
+                    category_name = f"💼 {category_name}"
+                else:
+                    category_name = f"📢 {category_name}"
+                
+                # Parse URLs (comma-separated)
+                urls = [url.strip() for url in value.split(',') if url.strip()]
+                if urls:
+                    feeds[category_name] = urls
+    
+    # Priority 3: Use default feeds only if no custom feeds are configured
     if not feeds:
         feeds = {
             "📰 General News": [

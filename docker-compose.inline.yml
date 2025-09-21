@@ -1,5 +1,3 @@
-version: '3.8'
-
 services:
   discord-rss-bot:
     image: isyuricunha/discord-rss-bot:latest
@@ -15,6 +13,7 @@ services:
       - COOLDOWN_DELAY=60
       - MAX_POST_LENGTH=1900
       - MAX_CONTENT_LENGTH=800
+      - FEED_TIMEOUT=30
       
       # Optional: Custom RSS feeds (comma-separated URLs)
       # Format: RSS_FEEDS_CATEGORY_NAME=url1,url2,url3

@@ -1,6 +1,6 @@
 # 🤖 Discord RSS Bot
 
-Automated bot that monitors RSS feeds and posts updates to Discord channels via webhook. Fully configurable with custom feeds and categories.
+Automated bot that monitors RSS feeds and posts updates to Discord channels via webhook. Fully configurable with custom feeds and categories. Features timeout handling to prevent hanging on slow RSS feeds.
 
 ## 📋 Features
 
@@ -11,6 +11,8 @@ Automated bot that monitors RSS feeds and posts updates to Discord channels via 
 - 🧹 Automatic cleanup of old data
 - 🐳 Fully containerized with Docker
 - 📊 Detailed logging and health checks
+- ⏱️ RSS feed timeout handling to prevent hanging
+- 🛡️ Robust error handling for network issues
 - 🏗️ Multiple deployment options (Docker, System Service)
 - 📦 Pre-built container images available
 - 🎯 **Multi-category support** with automatic emoji assignment
@@ -212,6 +214,7 @@ POST_DELAY=3
 COOLDOWN_DELAY=60
 MAX_POST_LENGTH=1900
 MAX_CONTENT_LENGTH=800
+FEED_TIMEOUT=30
 
 # Optional - Custom feeds
 RSS_FEEDS_NEWS=https://g1.globo.com/dynamo/rss2.xml,https://rss.uol.com.br/feed/noticias.xml
@@ -226,8 +229,7 @@ If no custom feeds are configured, the bot uses default Brazilian news feeds acr
 
 ```
 discord-rss-bot/
-├── bot.py                          # Main bot code (Docker version)
-├── bot_service.py                  # System service version
+├── bot_service.py                  # Main bot code (works for both Docker and system service)
 ├── requirements.txt                # Python dependencies
 ├── Dockerfile                      # Container configuration
 ├── docker-compose.yml              # Docker orchestration (local build)
@@ -300,7 +302,7 @@ pip install -r requirements.txt
 export DISCORD_WEBHOOK_URL="your_webhook_url_here"
 
 # Run the bot
-python bot.py
+python bot_service.py
 ```
 
 ### Run as System Service
@@ -326,6 +328,12 @@ Edit the `parse_feeds_from_env()` function in `bot_service.py` to modify default
 1. Check if webhook URL is correct
 2. Check logs: `docker-compose logs discord-rss-bot`
 3. Test webhook manually
+
+### Bot Hanging or Freezing
+The bot includes timeout handling to prevent hanging on slow RSS feeds:
+- **FEED_TIMEOUT**: Controls how long to wait for each RSS feed (default: 30 seconds)
+- If a feed times out, the bot logs a warning and continues with other feeds
+- Network errors are handled gracefully without stopping the entire process
 
 ### Container Won't Start
 1. Verify `.env` file exists and is configured

@@ -13,6 +13,7 @@ services:
       - COOLDOWN_DELAY=60
       - MAX_POST_LENGTH=1900
       - MAX_CONTENT_LENGTH=800
+      - FEED_TIMEOUT=30
       
       # Default RSS feeds configured as environment variables
       # General News

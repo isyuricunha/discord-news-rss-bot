@@ -68,6 +68,7 @@ jobs:
           push: ${{ github.event_name != 'pull_request' }}
           tags: |
             ${{ secrets.DOCKERHUB_USERNAME }}/discord-rss-bot:latest
+            ${{ secrets.DOCKERHUB_USERNAME }}/discord-rss-bot:${{ steps.version.outputs.new_tag }}
           labels: |
             org.opencontainers.image.title=Discord RSS Bot
             org.opencontainers.image.description=Bot to monitor RSS feeds and post to Discord

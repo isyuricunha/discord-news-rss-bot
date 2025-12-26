@@ -143,7 +143,7 @@ command="/opt/discord-rss-bot/venv/bin/python"
 command_args="/opt/discord-rss-bot/bot_service.py"
 command_user="discord-rss-bot:discord-rss-bot"
 command_background=true
-pidfile="/var/run/discord-rss-bot.pid"
+pidfile="/run/discord-rss-bot/discord-rss-bot.pid"
 
 directory="/opt/discord-rss-bot"
 
@@ -160,11 +160,11 @@ start_pre() {
     export RSS_BOT_DATA="/var/lib/discord-rss-bot"
     export RSS_BOT_LOGS="/var/log/discord-rss-bot"
     export RSS_BOT_CONFIG="/etc/discord-rss-bot/config.env"
-    export RSS_BOT_PID="/var/run/discord-rss-bot.pid"
+    export RSS_BOT_PID="/run/discord-rss-bot/discord-rss-bot.pid"
     
     # Ensure log directory exists
     checkpath --directory --owner discord-rss-bot:discord-rss-bot --mode 0755 \
-        /var/log/discord-rss-bot /var/lib/discord-rss-bot
+        /var/log/discord-rss-bot /var/lib/discord-rss-bot /run/discord-rss-bot
 }
 EOF
 

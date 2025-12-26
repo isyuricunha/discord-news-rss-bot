@@ -142,7 +142,7 @@ print_status "Creating systemd service..."
 cat > /etc/systemd/system/discord-rss-bot.service << EOF
 [Unit]
 Description=Discord RSS Bot Service
-Documentation=https://github.com/YOUR_USERNAME/discord-rss-bot
+Documentation=https://github.com/isyuricunha/discord-news-rss-bot
 After=network.target
 Wants=network.target
 
@@ -153,6 +153,8 @@ Group=$SERVICE_USER
 WorkingDirectory=$INSTALL_DIR
 ExecStart=$INSTALL_DIR/venv/bin/python $INSTALL_DIR/bot_service.py
 ExecReload=/bin/kill -HUP \$MAINPID
+RuntimeDirectory=discord-rss-bot
+RuntimeDirectoryMode=0755
 Restart=always
 RestartSec=10
 StandardOutput=journal
@@ -173,7 +175,7 @@ ProtectControlGroups=true
 Environment=RSS_BOT_DATA=$DATA_DIR
 Environment=RSS_BOT_LOGS=$LOG_DIR
 Environment=RSS_BOT_CONFIG=$CONFIG_DIR/config.env
-Environment=RSS_BOT_PID=/var/run/discord-rss-bot.pid
+Environment=RSS_BOT_PID=/run/discord-rss-bot/discord-rss-bot.pid
 
 [Install]
 WantedBy=multi-user.target

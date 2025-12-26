@@ -22,22 +22,22 @@ Automated bot that monitors RSS feeds and posts updates to Discord channels via 
 ### Using Pre-built Container (Recommended)
 
 ```bash
-# Create directories with proper permissions
+# Create directories for persistent data/logs
 mkdir -p ~/docker/docker-data/rss-discord-bot/data
 mkdir -p ~/docker/docker-data/rss-discord-bot/logs
 
-# Set permissions for container access
+# Set permissions for container access (container runs as non-root)
 chmod 777 ~/docker/docker-data/rss-discord-bot/logs
 chmod 777 ~/docker/docker-data/rss-discord-bot/data
 
-# Create .env file with your webhook URL
+# Create .env file with your webhook URL (do not commit this file)
 echo "DISCORD_WEBHOOK_URL=https://discord.com/api/webhooks/YOUR_ID/YOUR_TOKEN" > .env
 
 # Run with Docker Compose (for testing with pre-built image)
-docker-compose -f docker-compose.test.yml up -d
+docker compose -f docker-compose.test.yml up -d
 
 # View logs
-docker-compose -f docker-compose.test.yml logs -f
+docker compose -f docker-compose.test.yml logs -f
 ```
 
 ## 📦 Container Images
@@ -55,6 +55,8 @@ Pre-built images are available from multiple registries:
 
 The project uses automated CI/CD that:
 - **Auto-creates Git tags** on every push to `main` (e.g., `v2.0.8`)
+- **Creates a GitHub Release** for each tag
+- **Uses the triggering commit message** as the release title and body
 - **Publishes to both registries** simultaneously
 - **Maintains version consistency** across Docker Hub and GHCR
 - **Updates both `latest` and specific version tags**
@@ -63,26 +65,26 @@ The project uses automated CI/CD that:
 
 ### 1. Standard Docker Compose (with .env file)
 ```bash
-docker-compose up -d
+docker compose up -d
 ```
 
 ### 2. Inline Environment Variables
 ```bash
 # Edit docker-compose.inline.yml with your webhook URL
-docker-compose -f docker-compose.inline.yml up -d
+docker compose -f docker-compose.inline.yml up -d
 ```
 
 ### 3. Pre-built Image (from .env file)
 ```bash
 # Edit docker-compose.prebuilt.yml and configure .env file
-docker-compose -f docker-compose.prebuilt.yml up -d
+docker compose -f docker-compose.prebuilt.yml up -d
 ```
 
 ### 4. Testing with All Default Feeds
 ```bash
 # Use the test configuration with all feeds pre-configured
 # Edit webhook URL in docker-compose.test.yml first
-docker-compose -f docker-compose.test.yml up -d
+docker compose -f docker-compose.test.yml up -d
 ```
 
 ## 🖥️ System Service Installation
@@ -125,8 +127,8 @@ git push origin v1.0.0
 
 ### Docker Hub Setup
 1. Add secrets to your GitHub repository:
-   - `DOCKER_USERNAME`: Your Docker Hub username
-   - `DOCKER_PASSWORD`: Your Docker Hub password/token
+   - `DOCKERHUB_USERNAME`: Your Docker Hub username
+   - `DOCKERHUB_TOKEN`: Your Docker Hub token
 2. Update `.github/workflows/docker-hub.yml` with your username
 3. Push to trigger the build
 
@@ -136,6 +138,20 @@ git push origin v1.0.0
 | Variable | Description |
 |----------|-------------|
 | `DISCORD_WEBHOOK_URL` | **Required**: Discord webhook URL |
+
+### Paths (recommended)
+| Variable | Default (Docker image) | Description |
+|----------|-------------------------|-------------|
+| `RSS_BOT_DATA` | `/app/data` | Directory where the SQLite database is stored |
+| `RSS_BOT_LOGS` | `/app/logs` | Directory where log files are written |
+| `RSS_BOT_PID` | `/tmp/discord-rss-bot.pid` | PID file path (avoid `/var/run` in non-root containers) |
+
+### Advanced overrides (optional)
+| Variable | Description |
+|----------|-------------|
+| `DB_FILE` | Explicit SQLite DB file path (overrides `RSS_BOT_DATA`) |
+| `LOG_FILE` | Explicit log file path (overrides `RSS_BOT_LOGS`) |
+| `DATA_DIR` | Legacy alias for `RSS_BOT_DATA` |
 
 ### Optional Bot Settings
 | Variable | Default | Description |
@@ -217,12 +233,10 @@ discord-rss-bot/
 ├── docker-compose.inline.yml       # Inline environment variables (Docker Hub)
 ├── docker-compose.prebuilt.yml     # Pre-built image version (Docker Hub)
 ├── docker-compose.test.yml         # Testing with all default feeds (Docker Hub)
-├── .env                            # Environment variables
 ├── .env.example                    # Configuration example
 ├── .dockerignore                   # Files ignored in build
 ├── .github/workflows/              # CI/CD workflows
-│   ├── docker-publish.yml          # GitHub Container Registry
-│   └── docker-hub.yml              # Docker Hub publishing
+│   └── docker-hub.yml              # Docker Hub + GHCR publishing
 ├── systemd/                        # Linux systemd service
 │   └── discord-rss-bot.service
 ├── scripts/                        # Installation scripts
@@ -307,7 +321,7 @@ Edit the `parse_feeds_from_env()` function in `bot_service.py` to modify default
 
 ### Bot Not Posting
 1. Check if webhook URL is correct
-2. Check logs: `docker-compose logs discord-rss-bot`
+2. Check logs: `docker compose logs discord-rss-bot`
 3. Test webhook manually
 
 ### Bot Hanging or Freezing
@@ -317,8 +331,8 @@ The bot includes timeout handling to prevent hanging on slow RSS feeds:
 - Network errors are handled gracefully without stopping the entire process
 
 ### Container Won't Start
-1. Verify `.env` file exists and is configured
-2. Check logs: `docker-compose logs`
+1. Verify `DISCORD_WEBHOOK_URL` is configured (via environment or `.env`)
+2. Check logs: `docker compose logs`
 3. Ensure ports are not in use
 
 ### Permission Issues (Docker Volumes)
@@ -356,13 +370,13 @@ sudo chown -R $USER:$USER data logs
 ### Clean Data
 ```bash
 # Stop the bot
-docker-compose down
+docker compose down
 
 # Remove old data
 rm -rf data/* logs/*
 
 # Restart
-docker-compose up -d
+docker compose up -d
 ```
 
 ### Service Issues (Linux)

@@ -6,6 +6,10 @@ on:
   pull_request:
     branches: [ "main" ]
 
+permissions:
+  contents: write
+  packages: write
+
 jobs:
   push_to_registry:
     name: Push Docker image to Docker Hub
@@ -47,13 +51,40 @@ jobs:
           echo "New tag: $NEW_TAG"
           echo "Docker version: $DOCKER_VERSION"
 
+      - name: Get commit message
+        id: commit
+        if: github.event_name != 'pull_request'
+        env:
+          COMMIT_MESSAGE: ${{ github.event.head_commit.message }}
+        run: |
+          subject=$(printf '%s\n' "$COMMIT_MESSAGE" | head -n 1)
+          {
+            echo "subject<<EOF"
+            printf '%s\n' "$subject"
+            echo "EOF"
+            echo "body<<EOF"
+            printf '%s\n' "$COMMIT_MESSAGE"
+            echo "EOF"
+          } >> "$GITHUB_OUTPUT"
+
       - name: Create and push new tag
         if: github.event_name != 'pull_request'
+        env:
+          TAG_NAME: ${{ steps.version.outputs.new_tag }}
+          TAG_MESSAGE: ${{ steps.commit.outputs.body }}
         run: |
           git config --local user.email "action@github.com"
           git config --local user.name "GitHub Action"
-          git tag ${{ steps.version.outputs.new_tag }}
-          git push origin ${{ steps.version.outputs.new_tag }}
+          printf '%s\n' "$TAG_MESSAGE" | git tag -a "$TAG_NAME" -F -
+          git push origin "$TAG_NAME"
+
+      - name: Create GitHub Release
+        if: github.event_name != 'pull_request'
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ steps.version.outputs.new_tag }}
+          name: ${{ steps.commit.outputs.subject }}
+          body: ${{ steps.commit.outputs.body }}
 
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3

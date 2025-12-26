@@ -39,11 +39,6 @@ Thumbs.db
 .git/
 .gitignore
 
-# Docker
-Dockerfile*
-docker-compose*
-.dockerignore
-
 # Logs and data (will be mounted as volumes)
 *.log
 *.db
@@ -53,8 +48,4 @@ logs/
 # Environment files
 .env
 .env.local
-.env.example
 
-# Documentation
-README.md
-*.md

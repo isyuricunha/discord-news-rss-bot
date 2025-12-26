@@ -32,6 +32,7 @@ services:
       # Override default system paths to use Docker paths
       - RSS_BOT_DATA=/app/data
       - RSS_BOT_LOGS=/app/logs
+      - RSS_BOT_PID=/tmp/discord-rss-bot.pid
     volumes:
       - ~/docker/docker-data/rss-discord-bot/data:/app/data
       - ~/docker/docker-data/rss-discord-bot/logs:/app/logs

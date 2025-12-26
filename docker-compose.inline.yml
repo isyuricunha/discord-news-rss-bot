@@ -28,8 +28,9 @@ services:
       # Note: RSS_FEEDS takes priority over category-based feeds
       
       # System paths
-      - DB_FILE=/app/data/posted_hashes.db
-      - LOG_FILE=/app/logs/rss_bot.log
+      - RSS_BOT_DATA=/app/data
+      - RSS_BOT_LOGS=/app/logs
+      - RSS_BOT_PID=/tmp/discord-rss-bot.pid
     volumes:
       - ./data:/app/data
       - ./logs:/app/logs

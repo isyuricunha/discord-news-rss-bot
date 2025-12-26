@@ -127,37 +127,60 @@ MAX_POST_LENGTH = int(os.getenv('MAX_POST_LENGTH', '1900'))
 MAX_CONTENT_LENGTH = int(os.getenv('MAX_CONTENT_LENGTH', '800'))
 FEED_TIMEOUT = int(os.getenv('FEED_TIMEOUT', '30'))  # Timeout for RSS feed requests
 
-# Service-specific paths
-if os.name == 'nt':  # Windows
-    DATA_DIR = os.getenv('RSS_BOT_DATA', os.path.expanduser('~\\AppData\\Local\\DiscordRSSBot'))
-    LOG_DIR = os.getenv('RSS_BOT_LOGS', os.path.expanduser('~\\AppData\\Local\\DiscordRSSBot\\logs'))
-else:  # Linux/Unix
-    DATA_DIR = os.getenv('RSS_BOT_DATA', '/var/lib/discord-rss-bot')
-    LOG_DIR = os.getenv('RSS_BOT_LOGS', '/var/log/discord-rss-bot')
+def resolve_paths(environ=None, os_name=None):
+    env = environ if environ is not None else os.environ
+    effective_os_name = os_name if os_name is not None else os.name
 
-DB_FILE = os.path.join(DATA_DIR, 'posted_hashes.db')
-LOG_FILE = os.path.join(LOG_DIR, 'rss_bot.log')
-PID_FILE = os.getenv('RSS_BOT_PID', '/var/run/discord-rss-bot.pid')
+    # Service-specific defaults
+    if effective_os_name == 'nt':  # Windows
+        default_data_dir = os.path.expanduser('~\\AppData\\Local\\DiscordRSSBot')
+        default_log_dir = os.path.expanduser('~\\AppData\\Local\\DiscordRSSBot\\logs')
+    else:  # Linux/Unix
+        default_data_dir = '/var/lib/discord-rss-bot'
+        default_log_dir = '/var/log/discord-rss-bot'
 
-# ===================== LOGGING =====================
-# Create directories if they don't exist
-os.makedirs(DATA_DIR, exist_ok=True)
-os.makedirs(LOG_DIR, exist_ok=True)
+    # Prefer RSS_BOT_* variables (service/systemd). Fall back to legacy variables used by Docker examples.
+    data_dir = env.get('RSS_BOT_DATA') or env.get('DATA_DIR') or default_data_dir
 
-logging.basicConfig(
-    level=logging.INFO,
-    format='%(asctime)s - %(levelname)s - %(message)s',
-    handlers=[
-        logging.FileHandler(LOG_FILE, encoding='utf-8'),
-        logging.StreamHandler()
-    ]
-)
+    log_file = env.get('LOG_FILE')
+    log_dir = env.get('RSS_BOT_LOGS') or default_log_dir
+    if log_file:
+        derived_log_dir = os.path.dirname(log_file)
+        if derived_log_dir:
+            log_dir = derived_log_dir
+
+    db_file = env.get('DB_FILE') or os.path.join(data_dir, 'posted_hashes.db')
+    log_file = log_file or os.path.join(log_dir, 'rss_bot.log')
+
+    pid_file = env.get('RSS_BOT_PID', '/var/run/discord-rss-bot.pid')
+
+    return data_dir, log_dir, db_file, log_file, pid_file
+
+
+DATA_DIR, LOG_DIR, DB_FILE, LOG_FILE, PID_FILE = resolve_paths()
 logger = logging.getLogger(__name__)
+
+
+def configure_logging():
+    # ===================== LOGGING =====================
+    # Create directories if they don't exist
+    os.makedirs(DATA_DIR, exist_ok=True)
+    os.makedirs(LOG_DIR, exist_ok=True)
+
+    logging.basicConfig(
+        level=logging.INFO,
+        format='%(asctime)s - %(levelname)s - %(message)s',
+        handlers=[
+            logging.FileHandler(LOG_FILE, encoding='utf-8'),
+            logging.StreamHandler()
+        ]
+    )
 
 # ===================== SERVICE MANAGEMENT =====================
 class ServiceManager:
     def __init__(self):
         self.running = True
+        self.pid_file = PID_FILE
         signal.signal(signal.SIGTERM, self.signal_handler)
         signal.signal(signal.SIGINT, self.signal_handler)
         if hasattr(signal, 'SIGHUP'):
@@ -169,16 +192,26 @@ class ServiceManager:
 
     def write_pid_file(self):
         try:
-            with open(PID_FILE, 'w') as f:
+            with open(self.pid_file, 'w') as f:
                 f.write(str(os.getpid()))
-            logger.info(f"PID file written: {PID_FILE}")
+            logger.info(f"PID file written: {self.pid_file}")
+        except PermissionError as e:
+            temp_dir = os.getenv('TMPDIR') or os.getenv('TEMP') or '/tmp'
+            fallback_pid_file = os.path.join(temp_dir, 'discord-rss-bot.pid')
+            try:
+                with open(fallback_pid_file, 'w') as f:
+                    f.write(str(os.getpid()))
+                logger.warning(f"Could not write PID file to {self.pid_file}: {e}. Using {fallback_pid_file} instead.")
+                self.pid_file = fallback_pid_file
+            except Exception as fallback_error:
+                logger.warning(f"Could not write PID file: {fallback_error}")
         except Exception as e:
             logger.warning(f"Could not write PID file: {e}")
 
     def remove_pid_file(self):
         try:
-            if os.path.exists(PID_FILE):
-                os.remove(PID_FILE)
+            if os.path.exists(self.pid_file):
+                os.remove(self.pid_file)
                 logger.info("PID file removed")
         except Exception as e:
             logger.warning(f"Could not remove PID file: {e}")
@@ -473,6 +506,7 @@ def cleanup_old_entries(conn, days=30):
 
 def main():
     """Main service function"""
+    configure_logging()
     service_manager = ServiceManager()
     
     logger.info("🚀 Discord RSS Bot Service started.")

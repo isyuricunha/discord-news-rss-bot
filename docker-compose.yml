@@ -6,6 +6,9 @@ services:
     environment:
       # Required: Discord webhook URL
       - DISCORD_WEBHOOK_URL=${DISCORD_WEBHOOK_URL}
+      - RSS_BOT_DATA=/app/data
+      - RSS_BOT_LOGS=/app/logs
+      - RSS_BOT_PID=/tmp/discord-rss-bot.pid
       
       # Optional: Bot behavior settings
       - CHECK_INTERVAL=${CHECK_INTERVAL:-300}        # Check feeds every 5 minutes

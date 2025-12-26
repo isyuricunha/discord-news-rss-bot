@@ -16,10 +16,8 @@ import os
 import re
 import sys
 import signal
-from pathlib import Path
 import urllib.request
 import urllib.error
-from urllib.parse import urlparse
 import socket
 
 # ===================== CONFIGURATION =====================

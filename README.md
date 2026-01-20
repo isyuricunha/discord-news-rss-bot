@@ -48,39 +48,53 @@ Pre-built images are available from multiple registries:
 - **GitHub Container Registry**: `ghcr.io/isyuricunha/discord-news-rss-bot:latest` | `ghcr.io/isyuricunha/discord-news-rss-bot:2.0.8`
 
 ### Supported Architectures
+
 - `linux/amd64` (x86_64)
 - `linux/arm64` (ARM64/AArch64)
 
 ### 🏷️ Automatic Versioning
 
-The project uses automated CI/CD that:
-- **Auto-creates Git tags** on every push to `main` (e.g., `v2.0.8`)
-- **Creates a GitHub Release** for each tag
-- **Uses the triggering commit message** as the release title and body
-- **Publishes to both registries** simultaneously
-- **Maintains version consistency** across Docker Hub and GHCR
-- **Updates both `latest` and specific version tags**
+The project uses **Semantic Versioning** and **Conventional Commits** to automate releases.
+
+On each push to the `main` branch, GitHub Actions will:
+
+- Determine the next version based on commit messages
+- Create a Git tag in the format `v{version}` (e.g., `v2.0.17`)
+- Create a GitHub Release with generated release notes
+- If (and only if) a new version was released, build and publish Docker images
+
+Published Docker tags:
+
+- `latest`
+- `v{version}` (e.g., `v2.0.17`)
+- `{version}` (e.g., `2.0.17`)
+
+Note: Releases are created by `python-semantic-release`.
 
 ## 🐳 Docker Deployment Options
 
 ### 1. Standard Docker Compose (with .env file)
+
 ```bash
 docker compose up -d
 ```
 
 ### 2. Inline Environment Variables
+
 ```bash
 # Edit docker-compose.inline.yml with your webhook URL
 docker compose -f docker-compose.inline.yml up -d
 ```
 
 ### 3. Pre-built Image (from .env file)
+
 ```bash
 # Edit docker-compose.prebuilt.yml and configure .env file
 docker compose -f docker-compose.prebuilt.yml up -d
 ```
 
 ### 4. Testing with All Default Feeds
+
 ```bash
 # Use the test configuration with all feeds pre-configured
 # Edit webhook URL in docker-compose.test.yml first
@@ -92,24 +106,28 @@ docker compose -f docker-compose.test.yml up -d
 For production deployments, you can install the bot as a system service:
 
 ### Debian/Ubuntu
+
 ```bash
 sudo ./scripts/install-debian.sh --webhook-url "YOUR_WEBHOOK_URL"
 sudo systemctl start discord-rss-bot
 ```
 
 ### Fedora/RHEL/CentOS
+
 ```bash
 sudo ./scripts/install-fedora.sh --webhook-url "YOUR_WEBHOOK_URL"
 sudo systemctl start discord-rss-bot
 ```
 
 ### Alpine Linux
+
 ```bash
 sudo ./scripts/install-alpine.sh --webhook-url "YOUR_WEBHOOK_URL"
 sudo rc-service discord-rss-bot start
 ```
 
 ### Windows
+
 ```powershell
 # Run as Administrator
 .\windows\install.ps1 -WebhookUrl "YOUR_WEBHOOK_URL"
@@ -119,62 +137,135 @@ net start DiscordRSSBot
 ## 🔧 Publishing to Container Registries
 
 ### GitHub Container Registry (Automatic)
+
 Push to `main` branch or create a tag to automatically build and publish:
+
 ```bash
 git tag v1.0.0
 git push origin v1.0.0
 ```
 
 ### Docker Hub Setup
+
 1. Add secrets to your GitHub repository:
    - `DOCKERHUB_USERNAME`: Your Docker Hub username
    - `DOCKERHUB_TOKEN`: Your Docker Hub token
-2. Update `.github/workflows/docker-hub.yml` with your username
-3. Push to trigger the build
+2. Ensure GitHub Actions has permission to create tags/releases (repository setting: Workflow permissions must allow write access to contents)
+
+Secrets used by the workflows:
+
+- `GITHUB_TOKEN`: Automatically provided by GitHub Actions (must have `contents: write`)
+- `DOCKERHUB_USERNAME`: Required to push to Docker Hub
+- `DOCKERHUB_TOKEN`: Required to push to Docker Hub
+
+Optional note about protected branches:
+
+- If `main` is protected in a way that prevents `GITHUB_TOKEN` from pushing tags, use an admin PAT as a repository secret (for example `GH_RELEASE_TOKEN`) and update the workflow to use it.
+
+## 🧾 Conventional Commits
+
+Commit messages must follow the Conventional Commits specification:
+
+```text
+<type>(optional scope): <description>
+
+optional body
+
+optional footer(s)
+```
+
+Supported release-relevant types in this repository:
+
+- `feat`: Features
+- `fix`: Bug Fixes
+- `perf`: Performance Improvements
+- `docs`: Documentation
+- `build`: Dependencies (and build-related changes)
+- `chore`, `ci`, `refactor`, `style`, `test`: Other (no version bump by default)
+
+### Breaking changes
+
+To trigger a major release, include a `BREAKING CHANGE:` paragraph in the commit body:
+
+```text
+feat(api): change webhook payload format
+
+BREAKING CHANGE: payload fields were renamed and old fields were removed.
+```
+
+### Examples (what release is produced)
+
+- **Patch release**
+
+```text
+fix(docker): correct healthcheck path
+```
+
+- **Minor release**
+
+```text
+feat(rss): add support for multiple webhook targets
+```
+
+- **Major release**
+
+```text
+feat(config): remove legacy DATA_DIR variable
+
+BREAKING CHANGE: DATA_DIR is no longer supported; use RSS_BOT_DATA.
+```
 
 ## ⚙️ Configuration
 
 ### Required Variables
-| Variable | Description |
-|----------|-------------|
-| `DISCORD_WEBHOOK_URL` | **Required**: Discord webhook URL |
+
+| Variable              | Description                        |
+| :-------------------- | :--------------------------------- |
+| `DISCORD_WEBHOOK_URL` | **Required**: Discord webhook URL  |
 
 ### Paths (recommended)
-| Variable | Default (Docker image) | Description |
-|----------|-------------------------|-------------|
-| `RSS_BOT_DATA` | `/app/data` | Directory where the SQLite database is stored |
-| `RSS_BOT_LOGS` | `/app/logs` | Directory where log files are written |
-| `RSS_BOT_PID` | `/tmp/discord-rss-bot.pid` | PID file path (avoid `/var/run` in non-root containers) |
+
+| Variable       | Default (Docker image)     | Description                                              |
+| :------------- | :------------------------- | :------------------------------------------------------- |
+| `RSS_BOT_DATA` | `/app/data`                | Directory where the SQLite database is stored            |
+| `RSS_BOT_LOGS` | `/app/logs`                | Directory where log files are written                    |
+| `RSS_BOT_PID`  | `/tmp/discord-rss-bot.pid` | PID file path (avoid `/var/run` in non-root containers)  |
 
 ### Advanced overrides (optional)
-| Variable | Description |
-|----------|-------------|
-| `DB_FILE` | Explicit SQLite DB file path (overrides `RSS_BOT_DATA`) |
-| `LOG_FILE` | Explicit log file path (overrides `RSS_BOT_LOGS`) |
-| `DATA_DIR` | Legacy alias for `RSS_BOT_DATA` |
+
+| Variable   | Description                                              |
+| :--------- | :------------------------------------------------------- |
+| `DB_FILE`  | Explicit SQLite DB file path (overrides `RSS_BOT_DATA`)  |
+| `LOG_FILE` | Explicit log file path (overrides `RSS_BOT_LOGS`)        |
+| `DATA_DIR` | Legacy alias for `RSS_BOT_DATA`                          |
 
 ### Optional Bot Settings
-| Variable | Default | Description |
-|----------|---------|-------------|
-| `CHECK_INTERVAL` | 300 | Interval between checks (seconds) |
-| `POST_DELAY` | 3 | Delay between posts (seconds) |
-| `COOLDOWN_DELAY` | 60 | Delay after rate limit (seconds) |
-| `MAX_POST_LENGTH` | 1900 | Maximum message length |
-| `MAX_CONTENT_LENGTH` | 800 | Maximum content length |
-| `FEED_TIMEOUT` | 30 | RSS feed request timeout (seconds) |
+
+| Variable             | Default | Description                        |
+| :------------------- | ------: | :--------------------------------- |
+| `CHECK_INTERVAL`     |     300 | Interval between checks (seconds)  |
+| `POST_DELAY`         |       3 | Delay between posts (seconds)      |
+| `COOLDOWN_DELAY`     |      60 | Delay after rate limit (seconds)   |
+| `MAX_POST_LENGTH`    |    1900 | Maximum message length             |
+| `MAX_CONTENT_LENGTH` |     800 | Maximum content length             |
+| `FEED_TIMEOUT`       |      30 | RSS feed request timeout (seconds) |
 
 ### 🎯 RSS Feeds Configuration
 
 The bot supports **two configuration methods** with automatic priority handling:
 
 #### Option 1: Universal Feeds (Simple)
+
 Use a single variable for all your RSS feeds:
+
 ```bash
 RSS_FEEDS=https://example.com/rss,https://another.com/feed,https://third.com/rss
 ```
 
 #### Option 2: Category-Based Feeds (Organized)
+
 Use separate variables for different categories:
+
 ```bash
 RSS_FEEDS_NEWS=https://g1.globo.com/dynamo/rss2.xml,https://rss.uol.com.br/feed/noticias.xml
 RSS_FEEDS_TECHNOLOGY=https://canaltech.com.br/rss/,https://tecnoblog.net/feed/
@@ -183,12 +274,14 @@ RSS_FEEDS_BUSINESS=https://www.infomoney.com.br/rss/
 RSS_FEEDS_POLITICS=https://www.gazetadopovo.com.br/rss/brasil.xml
 ```
 
-#### 🔄 Priority System:
+#### 🔄 Priority System
+
 1. **RSS_FEEDS** (universal) - takes priority if set
 2. **RSS_FEEDS_CATEGORY** (categories) - used if no universal feeds
 3. **Default feeds** - Brazilian news feeds if no custom configuration
 
-#### 🎨 Automatic Category Emojis:
+#### 🎨 Automatic Category Emojis
+
 - **News/Noticias/General** → 📰
 - **Technology/Tecnologia** → 💻  
 - **Politics/Politica** → 🏛️
@@ -197,6 +290,7 @@ RSS_FEEDS_POLITICS=https://www.gazetadopovo.com.br/rss/brasil.xml
 - **Other categories** → 📢
 
 ### Docker Environment File (.env)
+
 ```bash
 # Required
 DISCORD_WEBHOOK_URL=https://discord.com/api/webhooks/YOUR_ID/YOUR_TOKEN
@@ -220,11 +314,12 @@ FEED_TIMEOUT=30
 ```
 
 ### Default Feeds
+
 If no custom feeds are configured, the bot uses default Brazilian news feeds across multiple categories.
 
 ## 📁 File Structure
 
-```
+```text
 discord-rss-bot/
 ├── bot_service.py                  # Main bot code (works for both Docker and system service)
 ├── requirements.txt                # Python dependencies
@@ -236,7 +331,7 @@ discord-rss-bot/
 ├── .env.example                    # Configuration example
 ├── .dockerignore                   # Files ignored in build
 ├── .github/workflows/              # CI/CD workflows
-│   └── docker-hub.yml              # Docker Hub + GHCR publishing
+│   └── docker-hub.yml              # Docker build validation for pull requests
 ├── systemd/                        # Linux systemd service
 │   └── discord-rss-bot.service
 ├── scripts/                        # Installation scripts
@@ -254,6 +349,7 @@ discord-rss-bot/
 ## 📰 Monitored Feeds
 
 ### 📰 General News
+
 - G1
 - UOL
 - Band
@@ -261,6 +357,7 @@ discord-rss-bot/
 - Folha de S.Paulo
 
 ### 🏛️ Politics & Conservative
+
 - Gazeta do Povo
 - Jovem Pan
 - Diário do Poder
@@ -274,6 +371,7 @@ discord-rss-bot/
 - Terra Politics
 
 ### 💻 Technology
+
 - Canaltech
 - Olhar Digital
 - Tecnoblog
@@ -312,25 +410,31 @@ python bot_service.py
 You can customize feeds in two ways:
 
 #### 1. Environment Variables (Recommended)
+
 Use the `RSS_FEEDS_CATEGORY_NAME` format as described in the Configuration section above.
 
 #### 2. Code Modification
+
 Edit the `parse_feeds_from_env()` function in `bot_service.py` to modify default feeds.
 
 ## 🐛 Troubleshooting
 
 ### Bot Not Posting
+
 1. Check if webhook URL is correct
 2. Check logs: `docker compose logs discord-rss-bot`
 3. Test webhook manually
 
 ### Bot Hanging or Freezing
+
 The bot includes timeout handling to prevent hanging on slow RSS feeds:
+
 - **FEED_TIMEOUT**: Controls how long to wait for each RSS feed (default: 30 seconds)
 - If a feed times out, the bot logs a warning and continues with other feeds
 - Network errors are handled gracefully without stopping the entire process
 
 ### Container Won't Start
+
 1. Verify `DISCORD_WEBHOOK_URL` is configured (via environment or `.env`)
 2. Check logs: `docker compose logs`
 3. Ensure ports are not in use
@@ -362,12 +466,14 @@ docker compose up -d
 ```
 
 ### Legacy Permission Fix (for local data/logs directories)
+
 ```bash
 # Fix volume permissions for local directories
 sudo chown -R $USER:$USER data logs
 ```
 
 ### Clean Data
+
 ```bash
 # Stop the bot
 docker compose down
@@ -380,6 +486,7 @@ docker compose up -d
 ```
 
 ### Service Issues (Linux)
+
 ```bash
 # Check service status
 sudo systemctl status discord-rss-bot
@@ -394,10 +501,12 @@ sudo systemctl restart discord-rss-bot
 ## 📊 Health Check
 
 The container includes a health check that verifies:
+
 - Database connectivity
 - Essential file integrity
 
 Status available via:
+
 ```bash
 docker inspect discord-rss-bot | grep Health -A 10
 ```
@@ -414,12 +523,14 @@ docker inspect discord-rss-bot | grep Health -A 10
 ## 📝 Logs
 
 Logs include:
+
 - Timestamp of each operation
 - Status of each feed checked
 - Detailed errors and warnings
 - Statistics of processed posts
 
 ### Log Locations
+
 - **Docker**: `./logs/rss_bot.log`
 - **System Service**: `/var/log/discord-rss-bot/rss_bot.log`
 - **Windows Service**: `C:\Program Files\DiscordRSSBot\logs\`

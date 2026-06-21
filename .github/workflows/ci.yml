@@ -14,7 +14,7 @@ jobs:
     name: Test and build
     runs-on: ubuntu-latest
     steps:
-      # actions/checkout v4.2.2
+      # actions/checkout v7.0.0
       - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0
 
       # actions/setup-go v5.5.0
@@ -58,7 +58,7 @@ jobs:
           RSS_FEEDS="https://example.com/rss" \
           ./dist/discord-rss-bot-linux-amd64 validate-config
 
-      # docker/setup-buildx-action v3.10.0
+      # docker/setup-buildx-action v4.1.0
       - uses: docker/setup-buildx-action@d7f5e7f509e45cec5c76c4d5afdd7de93d0b3df5
 
       - name: Docker build validation

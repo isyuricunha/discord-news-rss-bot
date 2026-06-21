@@ -59,7 +59,7 @@ jobs:
           ./dist/discord-rss-bot-linux-amd64 validate-config
 
       # docker/setup-buildx-action v3.10.0
-      - uses: docker/setup-buildx-action@b5ca514318bd6ebac0fb2aedd5d36ec1b5c232a2
+      - uses: docker/setup-buildx-action@d7f5e7f509e45cec5c76c4d5afdd7de93d0b3df5
 
       - name: Docker build validation
         run: docker build --build-arg VERSION=ci --build-arg COMMIT="${GITHUB_SHA}" --build-arg BUILD_DATE="$(date -u +%Y-%m-%dT%H:%M:%SZ)" -t discord-rss-bot:ci .

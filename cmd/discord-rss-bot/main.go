@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"io"
 	"log/slog"
 	"net/http"
 	"os"
@@ -18,7 +19,9 @@ import (
 	"github.com/isyuricunha/discord-news-rss-bot/internal/discord"
 	"github.com/isyuricunha/discord-news-rss-bot/internal/feed"
 	"github.com/isyuricunha/discord-news-rss-bot/internal/health"
+	"github.com/isyuricunha/discord-news-rss-bot/internal/model"
 	"github.com/isyuricunha/discord-news-rss-bot/internal/storage"
+	textutil "github.com/isyuricunha/discord-news-rss-bot/internal/text"
 	"github.com/isyuricunha/discord-news-rss-bot/internal/version"
 )
 
@@ -42,6 +45,8 @@ func run(args []string) error {
 		return runHealthcheck()
 	case "validate-config":
 		return runValidateConfig()
+	case "validate-feeds":
+		return runValidateFeeds()
 	case "version":
 		fmt.Println(version.String())
 		return nil
@@ -138,6 +143,68 @@ func runValidateConfig() error {
 	return nil
 }
 
+type feedFetcher interface {
+	Fetch(context.Context, model.FeedConfig, model.FeedState) (feed.Result, error)
+}
+
+func runValidateFeeds() error {
+	cfg, err := config.Load(config.LoadOptions{RequireWebhook: false})
+	if err != nil {
+		return err
+	}
+
+	ctx, stop := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM)
+	defer stop()
+
+	feedClient := feed.New(feed.Options{
+		Timeout:    cfg.FeedTimeout,
+		MaxBytes:   cfg.MaxFeedBytes,
+		MaxEntries: cfg.MaxEntriesPerFeed,
+	})
+	successful, failed := validateConfiguredFeeds(ctx, cfg, feedClient, os.Stdout)
+	fmt.Printf("Feeds: %d successful, %d failed\n", successful, failed)
+	if failed > 0 {
+		return fmt.Errorf("%d feed(s) failed validation", failed)
+	}
+	return ctx.Err()
+}
+
+func validateConfiguredFeeds(ctx context.Context, cfg config.Config, fetcher feedFetcher, output io.Writer) (int, int) {
+	successful := 0
+	failed := 0
+	for _, feedConfig := range cfg.Feeds {
+		if err := ctx.Err(); err != nil {
+			failed++
+			fmt.Fprintf(output, "FAIL %-20s %-28s %s\n", feedConfig.Source, feedConfig.Category, err)
+			return successful, failed
+		}
+		result, err := fetcher.Fetch(ctx, feedConfig, model.FeedState{})
+		if err != nil {
+			failed++
+			fmt.Fprintf(output, "FAIL %-20s %-28s %s (%s)\n", feedConfig.Source, feedConfig.Category, err, textutil.SanitizeURL(feedConfig.URL))
+			continue
+		}
+		if usableArticleCount(result.Articles) == 0 {
+			failed++
+			fmt.Fprintf(output, "FAIL %-20s %-28s no usable entries (%s)\n", feedConfig.Source, feedConfig.Category, textutil.SanitizeURL(feedConfig.URL))
+			continue
+		}
+		successful++
+		fmt.Fprintf(output, "OK   %-20s %-28s %d entries\n", feedConfig.Source, feedConfig.Category, len(result.Articles))
+	}
+	return successful, failed
+}
+
+func usableArticleCount(articles []model.Article) int {
+	count := 0
+	for _, article := range articles {
+		if strings.TrimSpace(article.Title) != "" && strings.TrimSpace(article.Link) != "" {
+			count++
+		}
+	}
+	return count
+}
+
 func configureLogger(cfg config.Config) (*slog.Logger, error) {
 	level := new(slog.LevelVar)
 	switch cfg.LogLevel {
@@ -172,5 +239,6 @@ Commands:
   run              start the feed polling service (default)
   healthcheck      validate persisted health state and database availability
   validate-config  validate configuration without starting the service
+  validate-feeds   fetch configured feeds without posting or touching the database
   version          print version metadata`)
 }

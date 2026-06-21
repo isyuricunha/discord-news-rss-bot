@@ -370,34 +370,6 @@ func parseFeedList(category string, raw string, seen map[string]struct{}) ([]mod
 }
 
 func SourceName(feedURL string) string {
-	domainMapping := map[string]string{
-		"g1.globo.com":               "G1",
-		"rss.uol.com.br":             "UOL",
-		"band.uol.com.br":            "Band",
-		"cnnbrasil.com.br":           "CNN Brasil",
-		"feeds.folha.uol.com.br":     "Folha",
-		"gazetadopovo.com.br":        "Gazeta do Povo",
-		"jovempan.com.br":            "Jovem Pan",
-		"diariodopoder.com.br":       "Diario do Poder",
-		"pragmatismopolitico.com.br": "Pragmatismo Politico",
-		"conexaopolitica.com.br":     "Conexao Politica",
-		"poder360.com.br":            "Poder 360",
-		"crusoe.uol.com.br":          "Crusoe",
-		"veja.abril.com.br":          "Veja",
-		"metropoles.com":             "Metropoles",
-		"oantagonista.com":           "O Antagonista",
-		"terra.com.br":               "Terra",
-		"canaltech.com.br":           "Canaltech",
-		"olhardigital.com.br":        "Olhar Digital",
-		"tecnoblog.net":              "Tecnoblog",
-		"meiobit.com":                "Meio Bit",
-		"showmetech.com.br":          "ShowMeTech",
-		"tecmundo.com.br":            "TecMundo",
-		"adrenaline.com.br":          "Adrenaline",
-		"hardware.com.br":            "Hardware.com.br",
-		"tudocelular.com":            "Tudo Celular",
-		"oficinadanet.com.br":        "Oficina da Net",
-	}
 	parsed, err := url.Parse(feedURL)
 	if err != nil {
 		return "Source"
@@ -556,50 +528,4 @@ func firstNonEmpty(values ...string) string {
 type defaultFeedGroup struct {
 	category string
 	urls     []string
-}
-
-func defaultFeedGroups() []defaultFeedGroup {
-	return []defaultFeedGroup{
-		{
-			category: "📰 General News",
-			urls: []string{
-				"https://g1.globo.com/dynamo/rss2.xml",
-				"https://rss.uol.com.br/feed/noticias.xml",
-				"https://www.band.uol.com.br/rss/noticias.xml",
-				"https://www.cnnbrasil.com.br/rss/",
-				"https://feeds.folha.uol.com.br/folha/rss02.xml",
-			},
-		},
-		{
-			category: "🏛️ Politics & Conservative",
-			urls: []string{
-				"https://www.gazetadopovo.com.br/rss/brasil.xml",
-				"https://jovempan.com.br/rss.xml",
-				"https://www.diariodopoder.com.br/feed/",
-				"https://www.pragmatismopolitico.com.br/feed/",
-				"https://conexaopolitica.com.br/feed/",
-				"https://www.poder360.com.br/feed/",
-				"https://crusoe.uol.com.br/rss/",
-				"https://veja.abril.com.br/rss/",
-				"https://www.metropoles.com/rss.xml",
-				"https://www.oantagonista.com/rss/",
-				"https://www.terra.com.br/rss/politica/",
-			},
-		},
-		{
-			category: "💻 Technology",
-			urls: []string{
-				"https://canaltech.com.br/rss/",
-				"https://olhardigital.com.br/feed/",
-				"https://tecnoblog.net/feed/",
-				"https://meiobit.com/feed/",
-				"https://www.showmetech.com.br/feed/",
-				"https://www.tecmundo.com.br/rss",
-				"https://www.adrenaline.com.br/rss/",
-				"https://www.hardware.com.br/rss/",
-				"https://www.tudocelular.com/rss/",
-				"https://www.oficinadanet.com.br/rss",
-			},
-		},
-	}
 }

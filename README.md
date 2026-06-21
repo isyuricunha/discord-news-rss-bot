@@ -5,6 +5,7 @@ Discord RSS Bot is a small Go service that monitors RSS and Atom feeds and posts
 ## Features
 
 - RSS and Atom parsing with `github.com/mmcdole/gofeed`
+- Legacy feed charset support for UTF-8, ISO-8859-1, and Windows-1252
 - SQLite persistence with the CGO-free `modernc.org/sqlite` driver
 - Duplicate prevention with GUID, normalized link, fallback identity, and v2 legacy hash compatibility
 - Safe initial synchronization; fresh installs skip historical articles by default
@@ -61,10 +62,11 @@ discord-rss-bot              # same as run
 discord-rss-bot run
 discord-rss-bot healthcheck
 discord-rss-bot validate-config
+discord-rss-bot validate-feeds
 discord-rss-bot version
 ```
 
-`validate-config` checks configuration without fetching feeds or posting messages. `healthcheck` reads `<RSS_BOT_DATA>/health.json` and opens the SQLite database read-only.
+`validate-config` checks configuration without fetching feeds or posting messages. `validate-feeds` fetches configured feeds, does not require a Discord webhook, does not touch SQLite, and returns a non-zero exit code if any configured feed fails. `healthcheck` reads `<RSS_BOT_DATA>/health.json` and opens the SQLite database read-only.
 
 ## Configuration
 
@@ -115,13 +117,21 @@ Category feeds are used when `RSS_FEEDS` is not set:
 
 ```env
 RSS_FEEDS_NEWS=https://g1.globo.com/dynamo/rss2.xml,https://rss.uol.com.br/feed/noticias.xml
-RSS_FEEDS_TECHNOLOGY=https://canaltech.com.br/rss/,https://tecnoblog.net/feed/
+RSS_FEEDS_TECHNOLOGY=https://canaltech.com.br/rss/,https://rss.tecmundo.com.br/feed
 RSS_FEEDS_SPORTS=https://globoesporte.globo.com/rss/ultimas/
 RSS_FEEDS_BUSINESS=https://www.infomoney.com.br/rss/
-RSS_FEEDS_POLITICS=https://www.gazetadopovo.com.br/rss/brasil.xml
+RSS_FEEDS_POLITICS=https://www.gazetadopovo.com.br/feed/rss/republica.xml
 ```
 
-If no feeds are configured, the existing Brazilian defaults are used for general news, politics/conservative, and technology. Duplicate feed URLs are polled once, and category/source metadata is kept for message formatting.
+If no feeds are configured, the bundled Brazilian defaults are used for general news, politics/conservative, and technology. Duplicate feed URLs are polled once, and category/source metadata is kept for message formatting.
+
+The v3.0.1 bundled defaults are:
+
+- General News: G1, UOL, Band, CNN Brasil, Folha
+- Politics & Conservative: Gazeta do Povo, Jovem Pan, Diario do Poder, Pragmatismo Politico, Conexao Politica, Poder 360, Crusoe, Veja, Metropoles, O Antagonista
+- Technology: Canaltech, Olhar Digital, Tecnoblog, Meio Bit, ShowMeTech, TecMundo, Adrenaline, Hardware.com.br, Tudo Celular, Oficina da Net
+
+Publisher feed URLs can change independently of the bot. Use `discord-rss-bot validate-feeds` after upgrades or when feed failures repeat, and set `RSS_FEEDS` or `RSS_FEEDS_*` when you prefer your own source list.
 
 ## Initial Synchronization
 
@@ -239,11 +249,17 @@ go test -cover ./...
 
 Tests use temporary SQLite databases and httptest servers. They do not require real Discord or RSS endpoints.
 
+To manually validate configured feeds against the network:
+
+```bash
+discord-rss-bot validate-feeds
+```
+
 ## Troubleshooting
 
 - `DISCORD_WEBHOOK_URL is required`: set the environment variable or put it in `RSS_BOT_CONFIG`.
 - Healthcheck says stale: inspect service logs; the service may be unable to complete cycles.
-- Feed failures repeat: verify the feed URL, timeout, and response size; sensitive URL query values are redacted in logs.
+- Feed failures repeat: run `discord-rss-bot validate-feeds`, verify the feed URL, timeout, charset, and response size; sensitive URL query values are redacted in logs.
 - No posts after first start: this is expected with `INITIAL_SYNC_MODE=skip`.
 - Bind-mount permission errors: set ownership to UID/GID `65532:65532`.
 

@@ -1,5 +1,16 @@
 # Changelog
 
+## v3.0.1
+
+- Refreshed the bundled Brazilian default feed list after a live endpoint audit.
+- Replaced dead publisher endpoints with verified official RSS endpoints for Band, Folha, Gazeta do Povo, Jovem Pan, Metropoles, O Antagonista, TecMundo, and Oficina da Net.
+- Removed Terra from the bundled defaults because no reliable official RSS or Atom endpoint was found.
+- Added ISO-8859-1 and Windows-1252 feed decoding while preserving the normal UTF-8 parsing path.
+- Added clearer errors when an endpoint returns an HTML page instead of RSS or Atom XML.
+- Added a version-aware application User-Agent and explicit feed-oriented `Accept` header.
+- Added `validate-feeds` for operational validation without Discord credentials, database writes, or posting.
+- Added focused tests for charset handling, HTML detection, default feed definitions, and local-fixture feed validation.
+
 ## v3.0.0
 
 - Rewrote the runtime in Go with a compact package layout and no Python dependency.

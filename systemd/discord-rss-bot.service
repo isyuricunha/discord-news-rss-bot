@@ -1,39 +1,45 @@
 [Unit]
-Description=Discord RSS Bot Service
+Description=Discord RSS Bot
 Documentation=https://github.com/isyuricunha/discord-news-rss-bot
-After=network.target
-Wants=network.target
+Wants=network-online.target
+After=network-online.target
 
 [Service]
 Type=simple
-User=discord-rss-bot
-Group=discord-rss-bot
-WorkingDirectory=/opt/discord-rss-bot
-ExecStart=/usr/bin/python3 /opt/discord-rss-bot/bot_service.py
-ExecReload=/bin/kill -HUP $MAINPID
-RuntimeDirectory=discord-rss-bot
-RuntimeDirectoryMode=0755
-Restart=always
-RestartSec=10
+DynamicUser=yes
+StateDirectory=discord-rss-bot
+StateDirectoryMode=0750
+Environment=RSS_BOT_DATA=/var/lib/discord-rss-bot
+Environment=RSS_BOT_CONFIG=/etc/discord-rss-bot/config.env
+EnvironmentFile=-/etc/discord-rss-bot/config.env
+ExecStart=/usr/local/bin/discord-rss-bot run
+Restart=on-failure
+RestartSec=10s
+StartLimitIntervalSec=5m
+StartLimitBurst=5
+KillSignal=SIGTERM
+TimeoutStopSec=30s
 StandardOutput=journal
 StandardError=journal
 SyslogIdentifier=discord-rss-bot
 
-# Security settings
 NoNewPrivileges=true
 PrivateTmp=true
 ProtectSystem=strict
 ProtectHome=true
-ReadWritePaths=/var/lib/discord-rss-bot /var/log/discord-rss-bot
+ReadWritePaths=/var/lib/discord-rss-bot
 ProtectKernelTunables=true
 ProtectKernelModules=true
+ProtectKernelLogs=true
 ProtectControlGroups=true
-
-# Environment
-Environment=RSS_BOT_DATA=/var/lib/discord-rss-bot
-Environment=RSS_BOT_LOGS=/var/log/discord-rss-bot
-Environment=RSS_BOT_CONFIG=/etc/discord-rss-bot/config.env
-Environment=RSS_BOT_PID=/run/discord-rss-bot/discord-rss-bot.pid
+ProtectClock=true
+ProtectHostname=true
+RestrictAddressFamilies=AF_INET AF_INET6 AF_UNIX
+RestrictNamespaces=true
+LockPersonality=true
+MemoryDenyWriteExecute=true
+CapabilityBoundingSet=
+SystemCallArchitectures=native
 
 [Install]
 WantedBy=multi-user.target

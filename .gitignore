@@ -1,24 +1,22 @@
-__pycache__/
-*.py[cod]
-*$py.class
-
-.venv/
-venv/
-
 .env
 .env.*
 !.env.example
 
-.pytest_cache/
 .coverage
+coverage.out
 htmlcov/
 
 data/
-logs/
 *.log
 *.db
 *.sqlite
 *.sqlite3
 *.pid
+dist/
+bin/
+tmp/
+
+*.test
+*.prof
 
 .DS_Store

@@ -1,49 +1,46 @@
-# Use Python 3.11 slim image for smaller size
-FROM python:3.11-slim
+# syntax=docker/dockerfile:1.7
 
-# Set working directory
+FROM --platform=$BUILDPLATFORM golang:1.26.4-bookworm AS build
+
+WORKDIR /src
+
+ARG TARGETOS=linux
+ARG TARGETARCH=amd64
+ARG VERSION=dev
+ARG COMMIT=unknown
+ARG BUILD_DATE=unknown
+
+ENV CGO_ENABLED=0
+
+COPY go.mod go.sum ./
+RUN --mount=type=cache,target=/go/pkg/mod go mod download
+
+COPY . .
+RUN --mount=type=cache,target=/go/pkg/mod \
+    --mount=type=cache,target=/root/.cache/go-build \
+    GOOS=$TARGETOS GOARCH=$TARGETARCH go build \
+      -trimpath \
+      -ldflags="-s -w -buildid= -X github.com/isyuricunha/discord-news-rss-bot/internal/version.Version=$VERSION -X github.com/isyuricunha/discord-news-rss-bot/internal/version.Commit=$COMMIT -X github.com/isyuricunha/discord-news-rss-bot/internal/version.Date=$BUILD_DATE" \
+      -o /out/discord-rss-bot ./cmd/discord-rss-bot
+
+RUN mkdir -p /out/rootfs/app/data /out/rootfs/tmp && chown -R 65532:65532 /out/rootfs/app /out/rootfs/tmp
+
+FROM scratch
+
+COPY --from=build /etc/ssl/certs/ca-certificates.crt /etc/ssl/certs/ca-certificates.crt
+COPY --from=build --chown=65532:65532 /out/rootfs/app /app
+COPY --from=build --chown=65532:65532 /out/rootfs/tmp /tmp
+COPY --from=build /out/discord-rss-bot /discord-rss-bot
+
 WORKDIR /app
 
-# Set environment variables
-ENV PYTHONDONTWRITEBYTECODE=1 \
-    PYTHONUNBUFFERED=1 \
-    PIP_NO_CACHE_DIR=1 \
-    PIP_DISABLE_PIP_VERSION_CHECK=1 \
-    RSS_BOT_DATA=/app/data \
-    RSS_BOT_LOGS=/app/logs \
-    RSS_BOT_PID=/tmp/discord-rss-bot.pid \
-    CHECK_INTERVAL=300 \
-    POST_DELAY=3 \
-    COOLDOWN_DELAY=60 \
-    MAX_POST_LENGTH=1900 \
-    MAX_CONTENT_LENGTH=800 \
-    FEED_TIMEOUT=30
+ENV RSS_BOT_DATA=/app/data \
+    LOG_LEVEL=info \
+    LOG_FORMAT=text
 
-# Install system dependencies
-RUN apt-get update && apt-get install -y --no-install-recommends \
-    ca-certificates \
-    && rm -rf /var/lib/apt/lists/*
+USER 65532:65532
+ENTRYPOINT ["/discord-rss-bot"]
+CMD ["run"]
 
-# Copy requirements first for better caching
-COPY requirements.txt .
-
-# Install Python dependencies
-RUN pip install --no-cache-dir -r requirements.txt
-
-# Copy application code
-COPY bot_service.py .
-
-# Create directories for database and logs
-RUN mkdir -p /app/data /app/logs
-
-# Create non-root user for security
-RUN groupadd -r botuser && useradd -r -g botuser botuser
-RUN chown -R botuser:botuser /app
-USER botuser
-
-# Health check
-HEALTHCHECK --interval=5m --timeout=30s --start-period=30s --retries=3 \
-    CMD python -c "import sqlite3; conn = sqlite3.connect('/app/data/posted_hashes.db'); conn.close()" || exit 1
-
-# Run the bot
-CMD ["python", "bot_service.py"]
+HEALTHCHECK --interval=5m --timeout=10s --start-period=2m --retries=3 \
+  CMD ["/discord-rss-bot", "healthcheck"]

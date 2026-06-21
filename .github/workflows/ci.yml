@@ -1,0 +1,81 @@
+name: CI
+
+on:
+  pull_request:
+    branches: ["main"]
+  push:
+    branches: ["main"]
+
+permissions:
+  contents: read
+
+jobs:
+  test:
+    name: Test and build
+    runs-on: ubuntu-latest
+    steps:
+      # actions/checkout v4.2.2
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+
+      # actions/setup-go v5.5.0
+      - uses: actions/setup-go@d35c59abb061a4a6fb18e82ac0862c26744d6ab5
+        with:
+          go-version-file: go.mod
+          cache: true
+
+      - name: Verify formatting
+        run: |
+          test -z "$(gofmt -l .)"
+
+      - name: Vet
+        run: go vet ./...
+
+      - name: Test
+        run: go test ./...
+
+      - name: Race test
+        run: go test -race ./...
+
+      - name: Coverage
+        run: go test -coverprofile=coverage.out ./...
+
+      - name: Vulnerability scan
+        run: go run golang.org/x/vuln/cmd/govulncheck@v1.1.4 ./...
+
+      - name: Build linux/amd64
+        run: CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -trimpath -ldflags="-s -w" -o dist/discord-rss-bot-linux-amd64 ./cmd/discord-rss-bot
+
+      - name: Build linux/arm64
+        run: CGO_ENABLED=0 GOOS=linux GOARCH=arm64 go build -trimpath -ldflags="-s -w" -o dist/discord-rss-bot-linux-arm64 ./cmd/discord-rss-bot
+
+      - name: Build windows/amd64
+        run: CGO_ENABLED=0 GOOS=windows GOARCH=amd64 go build -trimpath -ldflags="-s -w" -o dist/discord-rss-bot-windows-amd64.exe ./cmd/discord-rss-bot
+
+      - name: Config smoke test
+        run: |
+          RSS_BOT_DATA="$(mktemp -d)" \
+          DISCORD_WEBHOOK_URL="https://example.invalid/webhook" \
+          RSS_FEEDS="https://example.com/rss" \
+          ./dist/discord-rss-bot-linux-amd64 validate-config
+
+      # docker/setup-buildx-action v3.10.0
+      - uses: docker/setup-buildx-action@b5ca514318bd6ebac0fb2aedd5d36ec1b5c232a2
+
+      - name: Docker build validation
+        run: docker build --build-arg VERSION=ci --build-arg COMMIT="${GITHUB_SHA}" --build-arg BUILD_DATE="$(date -u +%Y-%m-%dT%H:%M:%SZ)" -t discord-rss-bot:ci .
+
+      - name: Docker image inspect
+        run: docker image inspect discord-rss-bot:ci >/dev/null
+
+      - name: Container version command
+        run: docker run --rm discord-rss-bot:ci version
+
+      - name: Container validate-config command
+        run: |
+          docker run --rm \
+            -e DISCORD_WEBHOOK_URL="https://example.invalid/webhook" \
+            -e RSS_FEEDS="https://example.com/rss" \
+            discord-rss-bot:ci validate-config
+
+      - name: Compose config validation
+        run: docker compose -f compose.yaml config >/dev/null

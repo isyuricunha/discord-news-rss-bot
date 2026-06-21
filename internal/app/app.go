@@ -8,6 +8,7 @@ import (
 	"time"
 
 	"github.com/isyuricunha/discord-news-rss-bot/internal/config"
+	"github.com/isyuricunha/discord-news-rss-bot/internal/discord"
 	"github.com/isyuricunha/discord-news-rss-bot/internal/feed"
 	"github.com/isyuricunha/discord-news-rss-bot/internal/health"
 	"github.com/isyuricunha/discord-news-rss-bot/internal/model"
@@ -17,7 +18,7 @@ import (
 )
 
 type Poster interface {
-	Post(context.Context, string) error
+	Post(context.Context, discord.Message) error
 }
 
 type Fetcher interface {
@@ -162,8 +163,10 @@ func (a *App) RunCycle(ctx context.Context) error {
 		if ctx.Err() != nil {
 			break
 		}
-		message := FormatMessage(article, a.cfg.MaxPostLength, a.cfg.MaxContentLength)
-		if message == "" {
+		message, err := BuildArticleMessage(article, a.cfg.MaxPostLength, a.cfg.MaxContentLength)
+		if err != nil {
+			stats.DiscordFailures++
+			a.logger.Error("Discord message build failed", "source", article.Source, "category", article.Category, "error", err)
 			continue
 		}
 		if err := a.poster.Post(ctx, message); err != nil {

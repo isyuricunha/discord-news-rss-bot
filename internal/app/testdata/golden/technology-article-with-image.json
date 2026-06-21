@@ -1,0 +1,24 @@
+{
+  "allowed_mentions": {
+    "parse": []
+  },
+  "embeds": [
+    {
+      "author": {
+        "name": "💻 Tecnoblog",
+        "url": "https://tech.example"
+      },
+      "color": 9133302,
+      "description": "Fabricante apresentou um processador com foco em eficiência e desempenho.",
+      "footer": {
+        "text": "Technology • RSS"
+      },
+      "image": {
+        "url": "https://cdn.example/chip.webp"
+      },
+      "timestamp": "2026-06-21T19:41:00Z",
+      "title": "Novo chip promete notebooks mais rápidos",
+      "url": "https://tech.example/chip"
+    }
+  ]
+}

@@ -22,7 +22,7 @@ func TestFetchValidRSSAndHeaders(t *testing.T) {
 		gotUserAgent = r.Header.Get("User-Agent")
 		w.Header().Set("ETag", `"abc"`)
 		w.Header().Set("Last-Modified", "Sun, 21 Jun 2026 00:00:00 GMT")
-		w.Write([]byte(`<?xml version="1.0"?><rss version="2.0"><channel><title>T</title><item><guid>g1</guid><title>Hello</title><link>https://example.com/a?utm_source=x</link><description><![CDATA[<p>Body</p>]]></description><pubDate>Sun, 21 Jun 2026 00:00:00 GMT</pubDate></item></channel></rss>`))
+		w.Write([]byte(`<?xml version="1.0"?><rss version="2.0"><channel><title>T</title><link>https://publisher.example/news</link><image><url>/logo.png</url><title>Logo</title><link>https://publisher.example</link></image><item><guid>g1</guid><title>Hello</title><link>https://example.com/a?utm_source=x</link><author>Reporter</author><description><![CDATA[<p>Body</p><img src="/image.jpg">]]></description><pubDate>Sun, 21 Jun 2026 00:00:00 GMT</pubDate></item></channel></rss>`))
 	}))
 	defer server.Close()
 
@@ -42,6 +42,13 @@ func TestFetchValidRSSAndHeaders(t *testing.T) {
 	}
 	if len(result.Articles) != 1 || result.Articles[0].GUID != "g1" || result.ETag != `"abc"` {
 		t.Fatalf("unexpected result %#v", result)
+	}
+	article := result.Articles[0]
+	if article.Description == "" || article.AuthorName != "Reporter" || article.SourceURL != "https://publisher.example/news" {
+		t.Fatalf("metadata missing: %#v", article)
+	}
+	if article.SourceIconURL != "https://publisher.example/logo.png" || article.ImageURL != "https://example.com/image.jpg" {
+		t.Fatalf("image metadata missing: %#v", article)
 	}
 }
 
@@ -123,8 +130,8 @@ func TestFetchCharsetHandling(t *testing.T) {
 			if result.Articles[0].Title != tt.wantTitle {
 				t.Fatalf("title mismatch: got %q want %q", result.Articles[0].Title, tt.wantTitle)
 			}
-			if !strings.Contains(result.Articles[0].Content, tt.wantText) {
-				t.Fatalf("description mismatch: got %q want text %q", result.Articles[0].Content, tt.wantText)
+			if !strings.Contains(result.Articles[0].Description, tt.wantText) {
+				t.Fatalf("description mismatch: got %q want text %q", result.Articles[0].Description, tt.wantText)
 			}
 		})
 	}

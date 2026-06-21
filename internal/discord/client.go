@@ -15,9 +15,8 @@ import (
 	"time"
 
 	"github.com/isyuricunha/discord-news-rss-bot/internal/text"
+	"github.com/isyuricunha/discord-news-rss-bot/internal/version"
 )
-
-const userAgent = "discord-rss-bot/3.0"
 
 type Client struct {
 	webhookURL       string
@@ -60,25 +59,11 @@ func New(options Options) *Client {
 	}
 }
 
-type payload struct {
-	Content         string          `json:"content"`
-	AllowedMentions allowedMentions `json:"allowed_mentions"`
-}
-
-type allowedMentions struct {
-	Parse []string `json:"parse"`
-}
-
-func (c *Client) Post(ctx context.Context, content string) error {
-	if strings.TrimSpace(content) == "" {
-		return errors.New("discord message content is empty")
+func (c *Client) Post(ctx context.Context, message Message) error {
+	if err := message.Validate(); err != nil {
+		return err
 	}
-	body, err := json.Marshal(payload{
-		Content: content,
-		AllowedMentions: allowedMentions{
-			Parse: []string{},
-		},
-	})
+	body, err := json.Marshal(message)
 	if err != nil {
 		return err
 	}
@@ -90,7 +75,7 @@ func (c *Client) Post(ctx context.Context, content string) error {
 			return fmt.Errorf("create Discord webhook request: %w", err)
 		}
 		req.Header.Set("Content-Type", "application/json")
-		req.Header.Set("User-Agent", userAgent)
+		req.Header.Set("User-Agent", userAgent())
 
 		res, err := c.httpClient.Do(req)
 		if err != nil {
@@ -215,4 +200,12 @@ func (c *Client) logRetry(attempt int, status int, delay time.Duration, reason s
 		"reason", reason,
 		"webhook", text.RedactSecret(c.webhookURL),
 	)
+}
+
+func userAgent() string {
+	value := strings.TrimSpace(version.Version)
+	if value == "" {
+		value = "dev"
+	}
+	return "discord-rss-bot/" + value
 }

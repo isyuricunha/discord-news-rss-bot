@@ -1,0 +1,17 @@
+{
+  "allowed_mentions": {
+    "parse": []
+  },
+  "embeds": [
+    {
+      "author": {
+        "name": "📢 Example"
+      },
+      "color": 5793266,
+      "footer": {
+        "text": "Universal Feeds • RSS"
+      },
+      "title": "Only a title"
+    }
+  ]
+}

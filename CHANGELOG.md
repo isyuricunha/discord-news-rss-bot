@@ -1,5 +1,18 @@
 # Changelog
 
+## v3.0.2
+
+- Replaced box-drawing plain-text posts with native Discord rich embeds.
+- Added clickable embed titles without top-level raw article URLs, preventing duplicate automatic link previews.
+- Added article image support from RSS/Atom item metadata, enclosures, media extensions, and feed-provided HTML snippets.
+- Added source icons when a feed exposes a feed image; no external favicon or image proxy service is used.
+- Added deterministic category accent colors and publication timestamps when available.
+- Improved summary cleanup for duplicated titles, repeated text, WhatsApp calls to action, standalone boilerplate, mentions, and Markdown control syntax.
+- Updated the Discord webhook User-Agent to use the build version.
+- Added typed Discord payload structures and embed limit validation.
+- Added tests for embed payloads, image extraction, summary cleanup, golden visual payload shapes, and visual-metadata deduplication regressions.
+- No database migration is required.
+
 ## v3.0.1
 
 - Refreshed the bundled Brazilian default feed list after a live endpoint audit.

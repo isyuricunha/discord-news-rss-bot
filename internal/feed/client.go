@@ -150,6 +150,8 @@ func (c *Client) Fetch(ctx context.Context, feedConfig model.FeedConfig, state m
 		limit = len(parsed.Items)
 	}
 	for i, item := range parsed.Items[:limit] {
+		sourceHomeURL := sourceURL(parsed, item.Link, result.FinalURL)
+		baseURLs := []string{item.Link, sourceHomeURL, result.FinalURL}
 		article := model.Article{
 			FeedURL:       feedConfig.URL,
 			Source:        feedConfig.Source,
@@ -158,11 +160,13 @@ func (c *Client) Fetch(ctx context.Context, feedConfig model.FeedConfig, state m
 			GUID:          item.GUID,
 			Link:          item.Link,
 			Title:         item.Title,
+			Description:   item.Description,
 			Content:       item.Content,
+			ImageURL:      articleImageURL(item, baseURLs...),
+			AuthorName:    articleAuthor(item),
+			SourceURL:     sourceHomeURL,
+			SourceIconURL: sourceIconURL(parsed, sourceHomeURL, result.FinalURL),
 			Sequence:      i,
-		}
-		if article.Content == "" {
-			article.Content = item.Description
 		}
 		if item.PublishedParsed != nil {
 			published := item.PublishedParsed.UTC()

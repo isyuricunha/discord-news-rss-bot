@@ -31,7 +31,12 @@ type Article struct {
 	Link           string
 	NormalizedLink string
 	Title          string
+	Description    string
 	Content        string
+	ImageURL       string
+	AuthorName     string
+	SourceURL      string
+	SourceIconURL  string
 	PublishedAt    *time.Time
 	ArticleKey     string
 	LegacyHash     string

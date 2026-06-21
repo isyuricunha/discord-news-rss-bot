@@ -1,0 +1,25 @@
+{
+  "allowed_mentions": {
+    "parse": []
+  },
+  "embeds": [
+    {
+      "author": {
+        "icon_url": "https://source.example/logo.png",
+        "name": "📰 G1",
+        "url": "https://source.example"
+      },
+      "color": 3447003,
+      "description": "Animal foi resgatado com segurança pela equipe ambiental.",
+      "footer": {
+        "text": "By Reporter Name • General News"
+      },
+      "image": {
+        "url": "https://cdn.example/image.jpg"
+      },
+      "timestamp": "2026-06-21T19:41:00Z",
+      "title": "Tamanduá fica preso em portão de residência",
+      "url": "https://news.example/article"
+    }
+  ]
+}

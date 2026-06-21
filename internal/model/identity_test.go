@@ -41,3 +41,23 @@ func TestLegacyHashCompatibility(t *testing.T) {
 		t.Fatalf("legacy hash changed: got %s want %s", got, want)
 	}
 }
+
+func TestVisualMetadataDoesNotAffectIdentity(t *testing.T) {
+	first := Article{
+		FeedURL: "https://example.com/feed",
+		GUID:    "item-1",
+		Title:   "Title",
+		Link:    "https://example.com/a",
+	}
+	second := first
+	second.Description = "New description"
+	second.ImageURL = "https://cdn.example/new.jpg"
+	second.SourceIconURL = "https://cdn.example/icon.png"
+	second.AuthorName = "Reporter"
+	second.SourceURL = "https://publisher.example"
+	PrepareArticleIdentity(&first)
+	PrepareArticleIdentity(&second)
+	if first.ArticleKey != second.ArticleKey || first.LegacyHash != second.LegacyHash {
+		t.Fatalf("visual metadata changed identity")
+	}
+}

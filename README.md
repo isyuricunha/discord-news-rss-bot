@@ -10,6 +10,7 @@ Discord RSS Bot is a small Go service that monitors RSS and Atom feeds and posts
 - Duplicate prevention with GUID, normalized link, fallback identity, and v2 legacy hash compatibility
 - Safe initial synchronization; fresh installs skip historical articles by default
 - Discord webhook posting with bounded retries and 429 retry timing from Discord
+- Native Discord rich embeds with clickable titles, category colors, feed images, and timestamps
 - Mandatory `allowed_mentions.parse=[]` on every webhook payload
 - HTTP caching with ETag and Last-Modified
 - Bounded concurrent feed fetching
@@ -88,8 +89,8 @@ The config file format is simple `KEY=VALUE`, with empty lines and comments igno
 | `CHECK_INTERVAL` | `300` | Poll interval in seconds or Go duration. |
 | `POST_DELAY` | `3` | Delay between successful Discord posts. |
 | `COOLDOWN_DELAY` | `60` | Final fallback delay when Discord gives no retry time. |
-| `MAX_POST_LENGTH` | `1900` | Max Discord message length; cannot exceed 2000. |
-| `MAX_CONTENT_LENGTH` | `800` | Max article preview length. |
+| `MAX_POST_LENGTH` | `1900` | Compatibility cap for combined user-visible embed text. Discord embed limits are always enforced. |
+| `MAX_CONTENT_LENGTH` | `800` | Max cleaned article summary length inside the embed description. |
 | `FEED_TIMEOUT` | `30` | Per-feed request timeout. |
 | `INITIAL_SYNC_MODE` | `skip` | One of `skip`, `latest`, `backfill`. |
 | `INITIAL_SYNC_MAX_POSTS` | `1` | Max first-seen backfill posts per feed. |
@@ -125,13 +126,30 @@ RSS_FEEDS_POLITICS=https://www.gazetadopovo.com.br/feed/rss/republica.xml
 
 If no feeds are configured, the bundled Brazilian defaults are used for general news, politics/conservative, and technology. Duplicate feed URLs are polled once, and category/source metadata is kept for message formatting.
 
-The v3.0.1 bundled defaults are:
+The bundled defaults are:
 
 - General News: G1, UOL, Band, CNN Brasil, Folha
 - Politics & Conservative: Gazeta do Povo, Jovem Pan, Diario do Poder, Pragmatismo Politico, Conexao Politica, Poder 360, Crusoe, Veja, Metropoles, O Antagonista
 - Technology: Canaltech, Olhar Digital, Tecnoblog, Meio Bit, ShowMeTech, TecMundo, Adrenaline, Hardware.com.br, Tudo Celular, Oficina da Net
 
 Publisher feed URLs can change independently of the bot. Use `discord-rss-bot validate-feeds` after upgrades or when feed failures repeat, and set `RSS_FEEDS` or `RSS_FEEDS_*` when you prefer your own source list.
+
+## Discord Message Appearance
+
+New articles are sent as one native Discord embed per article. The message has no top-level text content and does not include the raw article URL outside the embed, so Discord does not generate a second automatic link preview.
+
+Conceptually, each card uses:
+
+```text
+Author:      📰 Source
+Title:       Clickable article title
+Description: Clean concise summary when the feed provides one
+Image:       Article image when exposed by the feed
+Footer:      Category • RSS, or By Author • Category
+Timestamp:   Article publication time when available
+```
+
+Images come only from RSS or Atom metadata such as item images, image enclosures, media extensions, or `<img>` tags already present in feed descriptions/content. The bot does not fetch or scrape article webpages, does not download or rehost images, and does not use external favicon or image proxy services. Source icons are used only when the feed itself exposes a feed image.
 
 ## Initial Synchronization
 
@@ -266,6 +284,7 @@ discord-rss-bot validate-feeds
 ## Security Notes
 
 - Discord mentions are always disabled with `allowed_mentions.parse=[]`.
+- RSS text is cleaned so mention-like strings and disruptive Markdown do not control the card presentation.
 - Webhook secrets and sensitive feed URL query values are redacted from application logs.
 - Feed response size, retry loops, post loops, and concurrency are bounded.
 - The production container runs as non-root from `scratch`.

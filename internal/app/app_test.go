@@ -5,10 +5,12 @@ import (
 	"errors"
 	"log/slog"
 	"path/filepath"
+	"strings"
 	"testing"
 	"time"
 
 	"github.com/isyuricunha/discord-news-rss-bot/internal/config"
+	"github.com/isyuricunha/discord-news-rss-bot/internal/discord"
 	"github.com/isyuricunha/discord-news-rss-bot/internal/feed"
 	"github.com/isyuricunha/discord-news-rss-bot/internal/model"
 	"github.com/isyuricunha/discord-news-rss-bot/internal/storage"
@@ -29,11 +31,11 @@ func (f *fakeFetcher) Fetch(ctx context.Context, cfg model.FeedConfig, state mod
 }
 
 type fakePoster struct {
-	messages []string
+	messages []discord.Message
 	err      error
 }
 
-func (p *fakePoster) Post(ctx context.Context, message string) error {
+func (p *fakePoster) Post(ctx context.Context, message discord.Message) error {
 	if p.err != nil {
 		return p.err
 	}
@@ -91,7 +93,7 @@ func TestInitialSyncLatestAndBackfill(t *testing.T) {
 		if err := service.RunCycle(context.Background()); err != nil {
 			t.Fatal(err)
 		}
-		if len(poster.messages) != 1 || !contains(poster.messages[0], "new") {
+		if len(poster.messages) != 1 || !messageTitleContains(poster.messages[0], "new") {
 			t.Fatalf("latest mode posted wrong messages %#v", poster.messages)
 		}
 	})
@@ -102,7 +104,7 @@ func TestInitialSyncLatestAndBackfill(t *testing.T) {
 		if err := service.RunCycle(context.Background()); err != nil {
 			t.Fatal(err)
 		}
-		if len(poster.messages) != 1 || !contains(poster.messages[0], "old") {
+		if len(poster.messages) != 1 || !messageTitleContains(poster.messages[0], "old") {
 			t.Fatalf("backfill mode posted wrong messages %#v", poster.messages)
 		}
 	})
@@ -150,7 +152,7 @@ func TestGlobalCycleLimitAndRoundRobin(t *testing.T) {
 	if len(poster.messages) != 2 {
 		t.Fatalf("expected global cycle limit of 2 posts, got %d", len(poster.messages))
 	}
-	if !contains(poster.messages[0], "a1") || !contains(poster.messages[1], "b1") {
+	if !messageTitleContains(poster.messages[0], "a1") || !messageTitleContains(poster.messages[1], "b1") {
 		t.Fatalf("expected round-robin order, got %#v", poster.messages)
 	}
 }
@@ -231,15 +233,9 @@ func noSleep(context.Context, time.Duration) error {
 	return nil
 }
 
-func contains(input, needle string) bool {
-	return len(input) >= len(needle) && (input == needle || (len(needle) > 0 && find(input, needle)))
-}
-
-func find(input, needle string) bool {
-	for i := 0; i+len(needle) <= len(input); i++ {
-		if input[i:i+len(needle)] == needle {
-			return true
-		}
+func messageTitleContains(message discord.Message, needle string) bool {
+	if len(message.Embeds) == 0 {
+		return false
 	}
-	return false
+	return strings.Contains(message.Embeds[0].Title, needle)
 }

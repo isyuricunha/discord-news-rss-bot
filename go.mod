@@ -7,7 +7,7 @@ toolchain go1.26.4
 require (
 	github.com/mmcdole/gofeed v1.3.0
 	golang.org/x/net v0.55.0
-	golang.org/x/text v0.37.0
+	golang.org/x/text v0.38.0
 	modernc.org/sqlite v1.53.0
 )
 

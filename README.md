@@ -294,3 +294,7 @@ discord-rss-bot validate-feeds
 ## License
 
 The current [LICENSE](LICENSE) file is the source of truth and contains the GNU Affero General Public License v3.0.
+
+## Image:
+
+<img width="453" height="911" alt="image" src="https://github.com/user-attachments/assets/92fd09d5-cb52-460a-a6a2-61617a434eac" />
